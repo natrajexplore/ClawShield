@@ -62,8 +62,11 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 **Done when:** ≥ 90% of cases in a lab run correlate by session or time window.
 
 ## M4 — Scoring
-- [ ] Confusion matrix + metrics (FR-10, FR-11) in pure `core/score.py`, ≥ 85% coverage.
-- [ ] Slices: direction, category, severity, rule.
+- [x] Confusion matrix + metrics (FR-10, FR-11) in pure `core/score.py`, ≥ 85% coverage.
+      100% coverage; ratios are None when undefined; 95% Wilson intervals on recall/FPR;
+      ambiguous and errored cases excluded and counted; hand-verified 9-case fixture.
+- [x] Slices: direction, category, severity, rule.
+      Category/severity filter cases; direction/rule re-score using only those verdicts.
 - [ ] `clawshield score --run <id>` prints a table; `--json` for machines.
 - [ ] A/B compare (FR-12): `clawshield compare <runA> <runB>`.
 

@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(~/.defenseclaw/.env)",
+      "Bash(defenseclaw keys:*)",
+      "Bash(defenseclaw setup guardrail --mode action:*)"
+    ],
+    "ask": [
+      "Bash(defenseclaw setup:*)",
+      "Bash(defenseclaw guardrail:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

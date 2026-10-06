@@ -64,6 +64,7 @@ uv run pip-audit --skip-editable           # dependency CVEs
 uv run clawshield doctor         # checks DefenseClaw + target reachability
 uv run clawshield run --corpus redteam/corpus/seed.jsonl
 uv run clawshield runs                    # list runs; INCOMPLETE / (no snapshot) flagged
+uv run clawshield ingest --promptfoo results.json --out redteam/corpus/combined.jsonl
 uv run clawshield score --run latest
 uv run clawshield compare <runA> <runB>   # paired A/B with significance
 uv run clawshield tune --run latest       # noisy-rule recommendations (never executed)

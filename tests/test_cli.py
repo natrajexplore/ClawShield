@@ -40,7 +40,8 @@ def test_stubs_fail_closed(command: str) -> None:
 
 def test_documented_options_parse() -> None:
     # Options shown in CLAUDE.md must be accepted (stubs still fail closed).
-    assert runner.invoke(app, ["ingest", "--promptfoo", "r.json"]).exit_code == EXIT_NOT_IMPLEMENTED
+    missing = runner.invoke(app, ["ingest", "--promptfoo", "missing-results.json"])
+    assert missing.exit_code == EXIT_ERROR and "cannot read" in missing.output
 
 
 def test_printable_escapes_control_characters() -> None:

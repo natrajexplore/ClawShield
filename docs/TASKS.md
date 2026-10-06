@@ -39,6 +39,8 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       (>= 381 needed for a 1% block-FPR upper bound with zero FPs); near-duplicate test added.
       Critical cases (26; >= 110 needed for a 95% recall lower bound with one miss) are to
       come from promptfoo/garak imports (FR-5), not hand-written.
+      promptfoo import done (`clawshield ingest --promptfoo`, format verified from promptfoo
+      source; plugin allowlist; combined corpus re-validated). garak adapter pending.
 - [ ] `TargetClient` protocol + `mock` + `openclaw` implementations; allowlist enforced.
       Done: protocol, `mock`, allowlist re-check in `build_target`. Pending: `openclaw` (needs ADR 0002).
 - [x] `clawshield run` stores `Run` + `TargetResult` rows; captures guardrail snapshot.

@@ -6,6 +6,7 @@ scripts never mistake a stub for a passing check (especially `gate`).
 
 import json
 import re
+from collections import Counter
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, NoReturn
@@ -17,6 +18,11 @@ from clawshield.config import DEFAULT_CONFIG_PATH, ConfigError, load_settings
 from clawshield.core.models import DeclaredConfig
 from clawshield.core.score import Interval, SliceScore
 from clawshield.redteam.corpus import CorpusError, load_corpus
+from clawshield.redteam.promptfoo import (
+    PromptfooImportError,
+    import_promptfoo,
+    write_combined_corpus,
+)
 from clawshield.redteam.runner import RunError, execute_run
 from clawshield.scoring import (
     RunComparison,
@@ -508,6 +514,47 @@ def ingest(
         Path | None,
         typer.Option(help="promptfoo red-team results JSON to import as labeled cases."),
     ] = None,
+    base: Annotated[
+        Path, typer.Option(help="Corpus the imported cases are added to (kept verbatim).")
+    ] = Path("redteam/corpus/seed.jsonl"),
+    out: Annotated[Path, typer.Option(help="Combined corpus to write (base + imported).")] = Path(
+        "redteam/corpus/combined.jsonl"
+    ),
+    inject_var: Annotated[
+        str, typer.Option(help="promptfoo var holding the attack text (redteam injectVar).")
+    ] = "prompt",
+    config: ConfigOption = DEFAULT_CONFIG_PATH,
 ) -> None:
-    """Ingest DefenseClaw verdicts or external red-team results (FR-5, FR-7)."""
-    _not_implemented("ingest", "M3")
+    """Import promptfoo red-team cases (FR-5). DefenseClaw verdict ingest (FR-7) waits for M0."""
+    if promptfoo is None:
+        _not_implemented("ingest (DefenseClaw verdicts)", "M3, needs lab fixtures")
+    if out.resolve() == base.resolve():
+        _fail("--out must differ from --base; the base corpus is never modified")
+    try:
+        settings = load_settings(config)
+        base_corpus = load_corpus(base, known_canaries=settings.canaries)
+        report = import_promptfoo(
+            promptfoo, inject_var=inject_var, existing_texts=(c.text for c in base_corpus.cases)
+        )
+    except (ConfigError, CorpusError, PromptfooImportError) as exc:
+        _fail(str(exc))
+    if not report.cases:
+        _fail(f"no importable cases in {promptfoo} (rejected: {dict(report.rejected) or 'none'})")
+    base_lines = [ln for ln in base.read_text(encoding="utf-8-sig").splitlines() if ln.strip()]
+    added = write_combined_corpus(base_lines, report.cases, out)
+    try:
+        combined = load_corpus(out, known_canaries=settings.canaries)  # re-validate the result
+    except CorpusError as exc:
+        out.unlink(missing_ok=True)
+        _fail(f"combined corpus failed validation and was removed: {exc}")
+    counts = Counter(c.category.value for c in report.cases)
+    typer.echo(f"imported {added} case(s) into {out} ({len(combined.cases)} total)")
+    typer.echo("  by category: " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())))
+    critical = sum(1 for c in report.cases if c.expected_severity.value == "critical")
+    typer.echo(
+        f"  critical {critical} | duplicates skipped {report.duplicates} | "
+        f"severity defaulted {report.severity_defaulted}"
+    )
+    for reason, n in sorted(report.rejected.items()):
+        typer.echo(f"  rejected {n}: {printable(reason)}", err=True)
+    typer.echo(f"next: clawshield run --corpus {out}")

@@ -1,6 +1,9 @@
 # promptfoo red-team config — run only against your own lab target.
 # npx promptfoo@latest redteam run -c redteam/promptfooconfig.yaml
-# Then import results: uv run clawshield ingest --promptfoo <results.json>
+#   npx promptfoo@latest eval --output results.json   (after generating the red-team tests)
+# Then import: uv run clawshield ingest --promptfoo results.json --out redteam/corpus/combined.jsonl
+# Only allowlisted plugins are imported (see src/clawshield/redteam/promptfoo.py); others are
+# rejected and counted, so harmful:* generators never enter the corpus.
 
 description: ClawShield lab — HelpDesk demo agent behind DefenseClaw
 

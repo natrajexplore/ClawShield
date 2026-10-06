@@ -79,9 +79,14 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 **Done when:** scoring 1,000 synthetic outcomes < 5 s (NFR-6) and numbers hand-verified on a small fixture.
 
 ## M5 — Tuner + promotion gate
-- [ ] Suppression recommendations (FR-13) with evidence cases.
+- [x] Suppression recommendations (FR-13) with evidence cases.
+      `clawshield tune`: per noisy rule, the remedy DefenseClaw actually honours
+      (judge finding -> `finding_suppressions` YAML; regex/CEL rule -> narrow in a custom
+      pack, since suppressions never apply to rules), benign evidence, and the malicious
+      cases that rule alone catches.
 - [ ] Rule pack / detection strategy recommendation from A/B (FR-14).
 - [ ] Proposed commands generated, never executed (FR-15) — test asserts no subprocess call.
+      Done for the tuner (AST import check + subprocess trap); gate commands pending.
 - [ ] Gate (FR-16, FR-17) with configurable thresholds; observe duration from first observe-mode run.
 - [ ] Evidence pack export (FR-18): `reports/gate-<date>.md` + `.json`.
 

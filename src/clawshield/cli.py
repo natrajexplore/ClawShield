@@ -28,6 +28,7 @@ from clawshield.scoring import (
 from clawshield.sources.snapshot import capture_guardrail_snapshot
 from clawshield.storage.db import RunNotFoundError, Store, StoreSchemaError
 from clawshield.targets.base import TargetError, build_target
+from clawshield.tuner.recommend import Recommendation, recommend_suppressions
 
 EXIT_ERROR = 1
 EXIT_NOT_IMPLEMENTED = 2
@@ -349,6 +350,67 @@ def compare(
         typer.echo(json.dumps(comparison_to_dict(result), indent=2, sort_keys=True))
     else:
         _print_comparison(result)
+
+
+def recommendation_to_dict(r: Recommendation) -> dict[str, object]:
+    return {
+        "kind": r.kind, "target": r.target, "rationale": r.rationale,
+        "evidence_case_ids": list(r.evidence_case_ids),
+        "lost_detection_case_ids": list(r.lost_detection_case_ids),
+        "directions": list(r.directions), "proposed_change": r.proposed_change,
+        "proposed_command": r.proposed_command,
+    }  # fmt: skip
+
+
+@app.command()
+def tune(
+    run_id: Annotated[str, typer.Option("--run", help="Run id, or 'latest'.")] = "latest",
+    config: ConfigOption = DEFAULT_CONFIG_PATH,
+    corpus: Annotated[
+        Path | None,
+        typer.Option(help="Corpus file if it moved; must match the run's corpus hash."),
+    ] = None,
+    min_fp: Annotated[
+        int, typer.Option("--min-fp", min=1, help="Benign hits needed to recommend.")
+    ] = 1,
+    as_json: Annotated[bool, typer.Option("--json", help="Machine-readable output.")] = False,
+) -> None:
+    """Recommend fixes for noisy rules, with evidence (FR-13). Nothing is executed (FR-15)."""
+    try:
+        settings = load_settings(config)
+        if not settings.storage.db_path.exists():
+            _fail("no runs yet; run `clawshield run` first")
+        rs = score_run(Store(settings.storage.db_path), settings, run_id, corpus)
+    except RunNotFoundError:
+        _fail(f"run {run_id!r} not found")
+    except (ConfigError, CorpusError, StoreSchemaError, ScoringError) as exc:
+        _fail(str(exc))
+    recs = recommend_suppressions(
+        rs.inputs, rs.verdicts,
+        detected_min=settings.scoring.detected_min_severity,
+        connector=settings.defenseclaw.connector, min_false_positives=min_fp,
+    )  # fmt: skip
+    if as_json:
+        payload = {"run": rs.run.id, "recommendations": [recommendation_to_dict(r) for r in recs]}
+        typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    typer.echo(f"run {rs.run.id}: {len(recs)} recommendation(s). Review before running anything.")
+    if rs.verdicts_in_window == 0:
+        typer.echo("WARNING: no verdicts in this run's window; nothing to tune.", err=True)
+    _warn_overlap(rs)
+    for n, r in enumerate(recs, start=1):
+        typer.echo()
+        typer.echo(f"[{n}] {r.kind}  {printable(r.target)}  ({', '.join(r.directions)})")
+        typer.echo(f"    {printable(r.rationale)}")
+        typer.echo(f"    benign evidence: {', '.join(r.evidence_case_ids)}")
+        if r.lost_detection_case_ids:
+            typer.echo(f"    only detection of: {', '.join(r.lost_detection_case_ids)}")
+        for line in r.proposed_change.splitlines():
+            typer.echo(f"    {printable(line)}")
+        typer.echo(f"    then, in observe mode: {r.proposed_command}")
+    if recs:
+        typer.echo()
+        typer.echo("Re-run the corpus after any change and compare: clawshield compare <old> <new>")
 
 
 @app.command()

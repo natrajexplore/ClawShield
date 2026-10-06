@@ -185,6 +185,15 @@ def _score_slice(
     return SliceScore(dimension, value, tp, fp, tn, fn, block_tp, block_fp)
 
 
+def is_excluded(item: CaseInput) -> bool:
+    """Ambiguous correlation or a target error: the case cannot be scored reliably."""
+    return item.correlation.method == "ambiguous" or item.result.error is not None
+
+
+def scorable(inputs: Iterable[CaseInput]) -> list[CaseInput]:
+    return [i for i in inputs if not is_excluded(i)]
+
+
 def _by_direction(direction: str) -> VerdictFilter:
     return lambda v: v.direction == direction
 
@@ -218,8 +227,7 @@ def score(
         for i in inputs
         if i.correlation.method != "ambiguous" and i.result.error is not None
     )
-    excluded = set(ambiguous) | set(errors)
-    scored = [i for i in inputs if i.case.id not in excluded]
+    scored = scorable(inputs)
 
     def slice_of(
         dimension: str, value: str, cases: Iterable[CaseInput], keep: VerdictFilter

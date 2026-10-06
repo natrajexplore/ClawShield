@@ -95,8 +95,26 @@ defenseclaw setup guardrail --non-interactive --connector openclaw \
       **Proxy** ("the reference proxy connector"), per `docs/connectors/openclaw` (checked 2026-10-06).
       Default proxy port 4000 (`--port`). Re-confirm against the pinned version in M0.
 - [ ] JSONL destination config block and field names.
-- [ ] How suppressions are expressed (file format/location) for FR-13 command generation.
-      Lead: official docs page `docs/policies/suppression-cookbook`.
+- [x] How suppressions are expressed (file format/location) for FR-13 command generation.
+      Per `docs/policies/suppression-cookbook` (read 2026-10-06): a rule pack's
+      `suppressions.yaml` with `pre_judge_strips`, `finding_suppressions`
+      (`finding_pattern`, `entity_pattern`, optional `condition: is_epoch|is_platform_id`,
+      `reason`) and `tool_suppressions` (`tool_pattern`, `suppress_findings`, `reason`).
+      **Suppressions act on the LLM judge only; regex/CEL rule findings are never
+      suppressed.** For a noisy rule: narrow/disable it in your own pack (`rules/*.yaml`
+      entries have `id`, `pattern`, `title`, `severity`, `confidence`, `tags`, optional
+      `expression`, `tool_call_only`) and point `--rule-pack-dir` at it. Blanket patterns
+      (`.*`, `.+`, `^.*$`) are flagged `SUPP_OVER_BROAD` by DefenseClaw's creator.
+
+## Severity levels (`cmd_guardrail.py`, read 2026-10-06)
+- `defenseclaw guardrail block-at LEVEL [--connector X] [--no-restart] [--json]` and
+  `alert-at` (same options). LEVEL: `CRITICAL|HIGH|MEDIUM|LOW|inherit` (any case).
+- They apply to **tool calls in action mode**. Thresholds for LLM traffic through the
+  guardrail proxy (prompt/completion) are separate: `policy edit guardrail` (not yet verified).
+- Precedence: connector override > global > rule pack. Packs: strict blocks MEDIUM+;
+  default and permissive block CRITICAL. Alerts: strict LOW+, default MEDIUM+, permissive HIGH+.
+- Unverified until the lab: judge finding ids start with `JUDGE-` (docs examples), and the
+  on-disk location of the bundled packs (source tree: `policies/guardrail/<pack>/`).
 
 ## Platform support
 - OpenClaw (and ZeptoClaw) are **model-proxy connectors: unsupported on native Windows**. DefenseClaw

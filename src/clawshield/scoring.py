@@ -4,7 +4,8 @@ Labels come from the corpus file the run used. The file must still hash to the r
 recorded corpus_hash; otherwise edited labels would silently change the scores.
 """
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,7 @@ from typing import Any
 from clawshield.config import Settings
 from clawshield.core.compare import Comparison, PairedTest, compare
 from clawshield.core.correlate import DEFAULT_PRE_S, CorrelationReport, correlate
+from clawshield.core.models import Verdict
 from clawshield.core.score import CaseInput, Interval, Scorecard, SliceScore, score
 from clawshield.redteam.corpus import load_corpus
 from clawshield.storage.db import RunRow, Store
@@ -30,6 +32,8 @@ class RunScore:
     grace_s: float
     pre_s: float
     overlapping_runs: tuple[str, ...] = ()
+    inputs: tuple[CaseInput, ...] = ()
+    verdicts: Mapping[str, Verdict] = field(default_factory=dict)
 
     @property
     def snapshot_available(self) -> bool:
@@ -83,6 +87,7 @@ def score_run(
     return RunScore(
         run=run, card=card, correlation=report, verdicts_in_window=len(verdicts),
         grace_s=grace_s, pre_s=DEFAULT_PRE_S, overlapping_runs=overlapping,
+        inputs=tuple(inputs), verdicts=by_id,
     )  # fmt: skip
 
 

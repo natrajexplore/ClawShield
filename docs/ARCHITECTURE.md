@@ -50,7 +50,10 @@ Verdict         id(hash), ts, connector, direction(prompt|completion|tool_call),
 CaseOutcome     run_id, case_id, verdict_ids[], correlation(session|time_window|none),
                 detected(bool), would_block(bool), canary_leaked(bool)
 Scorecard       run_id, slice(dimension,value), tp, fp, tn, fn, recall, fpr, precision
-Recommendation  kind(suppress|rule_pack|strategy), target, rationale, evidence_case_ids[], proposed_command
+Recommendation  kind(suppress|narrow_rule|rule_pack|strategy), target, rationale, evidence_case_ids[],
+                lost_detection_case_ids[], proposed_change, proposed_command
+                (suppress = LLM-judge findings only; regex/CEL rules need narrow_rule, see
+                docs/DEFENSECLAW_REFERENCE.md)
 GateReport      ts, criteria[{name, threshold, observed, pass}], overall_pass, proposed_command
 ```
 

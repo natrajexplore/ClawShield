@@ -102,7 +102,11 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       `gate.evaluate_on: confidence_bound` (95% Wilson bounds) per operator decision; added
       evidence_quality and config_consistency criteria; `--mode action` command only on PASS.
       Observe mode stays UNVERIFIED until the snapshot format is verified (M0).
-- [ ] Evidence pack export (FR-18): `reports/gate-<date>.md` + `.json`.
+- [x] Evidence pack export (FR-18): `reports/gate-<date>.md` + `.json`.
+      `clawshield gate --export reports/` -> gate-<date>-<run>.json/.md for any result;
+      ids only (no prompt/response text), Markdown-escaped data, JSON SHA-256 in the .md,
+      auto-generated limitations and reproduce commands.
+      M5 done-when met against the mock baseline (FAIL with reasons); re-check on the lab.
 
 **Done when:** gate FAILs on the untuned baseline and the report explains exactly why.
 

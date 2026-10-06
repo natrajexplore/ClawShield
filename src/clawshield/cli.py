@@ -25,6 +25,7 @@ from clawshield.redteam.promptfoo import (
     write_combined_corpus,
 )
 from clawshield.redteam.runner import RunError, execute_run
+from clawshield.report import build_evidence, write_evidence_pack
 from clawshield.scoring import (
     RunComparison,
     RunScore,
@@ -526,6 +527,10 @@ def gate(
         typer.Option(help="Corpus file if it moved; must match the run's corpus hash."),
     ] = None,
     as_json: Annotated[bool, typer.Option("--json", help="Machine-readable output.")] = False,
+    export: Annotated[
+        Path | None,
+        typer.Option(help="Write the evidence pack (FR-18) as .json + .md into this directory."),
+    ] = None,
 ) -> None:
     """Evaluate observe -> action promotion readiness (FR-16, FR-17).
 
@@ -535,7 +540,7 @@ def gate(
         settings = load_settings(config)
         if not settings.storage.db_path.exists():
             _fail("no runs yet; run `clawshield run` first")
-        _, report = gate_run(Store(settings.storage.db_path), settings, run_id, corpus)
+        rs, report = gate_run(Store(settings.storage.db_path), settings, run_id, corpus)
     except RunNotFoundError:
         _fail(f"run {run_id!r} not found")
     except (ConfigError, CorpusError, StoreSchemaError, ScoringError) as exc:
@@ -555,6 +560,12 @@ def gate(
             typer.echo(f"  {report.proposed_command}")
         else:
             typer.echo("no promotion command: every criterion must PASS first.")
+    if export is not None:
+        try:
+            json_path, md_path = write_evidence_pack(build_evidence(rs, report, settings), export)
+        except OSError as exc:
+            _fail(f"cannot write evidence pack to {export}: {exc.strerror}")
+        typer.echo(f"evidence pack: {md_path} (+ {json_path.name})", err=as_json)
     if report.overall != "PASS":
         raise typer.Exit(code=EXIT_GATE_NOT_PASSED)
 

@@ -54,6 +54,10 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       else canonical-JSON SHA-256), `VerdictSource` protocol, `Store.add_verdicts` with
       ON CONFLICT DO NOTHING; raw payload dropped when redacting.
 - [ ] Correlation per ARCHITECTURE.md; ADR 0003; report correlation coverage.
+      Done: `core/correlate.py` (session -> time window -> ambiguous, never guessed),
+      coverage + unattributed counts, ADR 0003. Pending: CLI coverage report, which needs
+      a working VerdictSource (fixtures). Config note: shipped delay 1500 ms < grace 3 s + 1 s
+      makes windows overlap; see ADR 0003.
 
 **Done when:** ≥ 90% of cases in a lab run correlate by session or time window.
 

@@ -111,7 +111,7 @@ def test_nonzero_exit_returned_with_stderr() -> None:
 def test_output_decoded_as_utf8_with_replacement() -> None:
     code = "import sys; sys.stdout.buffer.write('caf\\u00e9 \\u2713 '.encode() + b'\\xff')"
     result = run([PY, "-c", code], timeout_s=30)
-    assert result.stdout == "café ✓ �"
+    assert result.stdout == "caf\u00e9 \u2713 \ufffd"
 
 
 def test_env_overrides_merged(monkeypatch: pytest.MonkeyPatch) -> None:

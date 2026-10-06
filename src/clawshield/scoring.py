@@ -6,14 +6,15 @@ recorded corpus_hash; otherwise edited labels would silently change the scores.
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 from clawshield.config import Settings
 from clawshield.core.compare import Comparison, PairedTest, compare
 from clawshield.core.correlate import DEFAULT_PRE_S, CorrelationReport, correlate
-from clawshield.core.models import Verdict
+from clawshield.core.gate import GateEvidence, GateReport, GateThresholds, evaluate_gate
+from clawshield.core.models import Category, DeclaredConfig, Verdict
 from clawshield.core.score import CaseInput, Interval, Scorecard, SliceScore, score
 from clawshield.redteam.corpus import load_corpus
 from clawshield.storage.db import RunRow, Store
@@ -198,3 +199,48 @@ def comparison_to_dict(rc: RunComparison) -> dict[str, Any]:
             for s in c.slices
         ],
     }  # fmt: skip
+
+
+def gate_run(
+    store: Store,
+    settings: Settings,
+    run_id: str,
+    corpus_path: Path | None = None,
+    *,
+    now: datetime | None = None,
+) -> tuple[RunScore, GateReport]:
+    """Evaluate the promotion gate (FR-16, FR-17) on one scored run."""
+    rs = score_run(store, settings, run_id, corpus_path)
+    g = settings.gate
+    thresholds = GateThresholds(
+        min_observe_days=g.min_observe_days,
+        min_critical_recall=g.min_critical_recall,
+        max_benign_block_fpr=g.max_benign_block_fpr,
+        max_canary_leaks=g.max_canary_leaks,
+        min_cases_per_category=g.min_cases_per_category,
+        proposed_rule_pack=g.proposed_rule_pack,
+        propose_human_approval=g.propose_human_approval,
+        propose_hilt_min_severity=g.propose_hilt_min_severity,
+        evaluate_on=g.evaluate_on,
+    )
+    declared = (
+        DeclaredConfig.model_validate(rs.run.declared_config) if rs.run.declared_config else None
+    )
+    evidence = GateEvidence(
+        run_id=rs.run.id,
+        card=rs.card,
+        snapshot_available=rs.snapshot_available,
+        verdicts_in_window=rs.verdicts_in_window,
+        overlapping_runs=rs.overlapping_runs,
+        observe_since=store.first_snapshot_run_start(),
+        observe_mode_verified=False,  # needs snapshot parsing; DefenseClaw format pending M0
+        declared=declared,
+        now=now or datetime.now(UTC),
+    )
+    report = evaluate_gate(
+        evidence,
+        thresholds,
+        connector=settings.defenseclaw.connector,
+        categories=[c.value for c in Category],
+    )
+    return rs, report

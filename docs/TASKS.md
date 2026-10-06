@@ -95,9 +95,13 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       `clawshield recommend-config A B` applies explicit rules (critical-recall veto,
       adopt / keep / trade-off) and proposes an observe-mode command. Declared config is
       to be cross-checked against the guardrail snapshot once its format is verified.
-- [ ] Proposed commands generated, never executed (FR-15) — test asserts no subprocess call.
-      Done for the tuner (AST import check + subprocess trap); gate commands pending.
-- [ ] Gate (FR-16, FR-17) with configurable thresholds; observe duration from first observe-mode run.
+- [x] Proposed commands generated, never executed (FR-15) — test asserts no subprocess call.
+      Tuner, recommend-config and gate: AST import checks + subprocess traps.
+- [x] Gate (FR-16, FR-17) with configurable thresholds; observe duration from first observe-mode run.
+      PASS / FAIL / UNVERIFIED per criterion; overall PASS only if all pass (exit 0, else 3).
+      `gate.evaluate_on: confidence_bound` (95% Wilson bounds) per operator decision; added
+      evidence_quality and config_consistency criteria; `--mode action` command only on PASS.
+      Observe mode stays UNVERIFIED until the snapshot format is verified (M0).
 - [ ] Evidence pack export (FR-18): `reports/gate-<date>.md` + `.json`.
 
 **Done when:** gate FAILs on the untuned baseline and the report explains exactly why.

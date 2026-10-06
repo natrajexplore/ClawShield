@@ -69,7 +69,7 @@ uv run clawshield score --run latest
 uv run clawshield compare <runA> <runB>   # paired A/B with significance
 uv run clawshield tune --run latest       # noisy-rule recommendations (never executed)
 uv run clawshield recommend-config <A> <B> # rule pack / strategy from an A/B pair
-uv run clawshield gate
+uv run clawshield gate                   # exit 0 only on PASS; FAIL/UNVERIFIED exit 3
 uv run uvicorn clawshield.console.app:app --reload --port 8088
 ```
 

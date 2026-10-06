@@ -250,6 +250,19 @@ class Store:
             raise RunNotFoundError(run_id)
         return run
 
+    def first_snapshot_run_start(self) -> datetime | None:
+        """Start of the earliest complete run that captured a guardrail snapshot."""
+        with Session(self.engine) as session:
+            stmt = (
+                select(RunRow)
+                .where(col(RunRow.finished_at).is_not(None))
+                .order_by(col(RunRow.started_at))
+            )
+            for run in session.exec(stmt):
+                if run.guardrail_snapshot.get("available"):
+                    return run.started_at
+        return None
+
     def runs_overlapping(self, start: datetime, end: datetime, exclude: str) -> list[str]:
         """Ids of other runs active at any point in [start, end] (unfinished = still active)."""
         with Session(self.engine) as session:

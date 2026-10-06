@@ -144,6 +144,8 @@ class GateConfig(_Strict):
     proposed_rule_pack: Literal["default", "strict", "permissive"] = "default"
     propose_human_approval: bool = True
     propose_hilt_min_severity: Severity = Severity.HIGH
+    # Operator decision 2026-10-06: judge accuracy on 95% Wilson bounds, not point estimates.
+    evaluate_on: Literal["confidence_bound", "point_estimate"] = "confidence_bound"
 
 
 class RegressionConfig(_Strict):

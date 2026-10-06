@@ -15,6 +15,7 @@ import typer
 
 from clawshield import __version__
 from clawshield.config import DEFAULT_CONFIG_PATH, ConfigError, load_settings
+from clawshield.core.gate import GateReport
 from clawshield.core.models import DeclaredConfig
 from clawshield.core.score import Interval, SliceScore
 from clawshield.redteam.corpus import CorpusError, load_corpus
@@ -30,6 +31,7 @@ from clawshield.scoring import (
     ScoringError,
     compare_runs,
     comparison_to_dict,
+    gate_run,
     score_run,
     to_dict,
 )
@@ -41,6 +43,7 @@ from clawshield.tuner.strategy import recommend_config
 
 EXIT_ERROR = 1
 EXIT_NOT_IMPLEMENTED = 2
+EXIT_GATE_NOT_PASSED = 3
 MAX_NOTES_CHARS = 1000
 
 
@@ -502,10 +505,58 @@ def recommend_config_cmd(
         typer.echo(f"  {rec.proposed_command}")
 
 
+def gate_to_dict(report: GateReport) -> dict[str, object]:
+    return {
+        "run": report.run_id, "overall": report.overall, "evaluate_on": report.evaluate_on,
+        "criteria": [
+            {"name": c.name, "threshold": c.threshold, "observed": c.observed,
+             "status": c.status, "detail": c.detail}
+            for c in report.criteria
+        ],
+        "proposed_command": report.proposed_command,
+    }  # fmt: skip
+
+
 @app.command()
-def gate() -> None:
-    """Evaluate observe -> action promotion readiness (FR-16, FR-17)."""
-    _not_implemented("gate", "M5")
+def gate(
+    run_id: Annotated[str, typer.Option("--run", help="Run id, or 'latest'.")] = "latest",
+    config: ConfigOption = DEFAULT_CONFIG_PATH,
+    corpus: Annotated[
+        Path | None,
+        typer.Option(help="Corpus file if it moved; must match the run's corpus hash."),
+    ] = None,
+    as_json: Annotated[bool, typer.Option("--json", help="Machine-readable output.")] = False,
+) -> None:
+    """Evaluate observe -> action promotion readiness (FR-16, FR-17).
+
+    Exit 0 only on PASS; FAIL and UNVERIFIED exit 3. Nothing is executed.
+    """
+    try:
+        settings = load_settings(config)
+        if not settings.storage.db_path.exists():
+            _fail("no runs yet; run `clawshield run` first")
+        _, report = gate_run(Store(settings.storage.db_path), settings, run_id, corpus)
+    except RunNotFoundError:
+        _fail(f"run {run_id!r} not found")
+    except (ConfigError, CorpusError, StoreSchemaError, ScoringError) as exc:
+        _fail(str(exc))
+    if as_json:
+        typer.echo(json.dumps(gate_to_dict(report), indent=2, sort_keys=True))
+    else:
+        typer.echo(f"gate for run {report.run_id} ({report.evaluate_on.replace('_', ' ')})")
+        for c in report.criteria:
+            typer.echo(f"  [{c.status:<10}] {c.name:<20} {c.threshold}")
+            typer.echo(f"  {'':<12} observed: {printable(c.observed)}")
+            if c.detail:
+                typer.echo(f"  {'':<12} {printable(c.detail)}")
+        typer.echo(f"OVERALL: {report.overall}")
+        if report.proposed_command:
+            typer.echo("proposed promotion (review, then run it yourself):")
+            typer.echo(f"  {report.proposed_command}")
+        else:
+            typer.echo("no promotion command: every criterion must PASS first.")
+    if report.overall != "PASS":
+        raise typer.Exit(code=EXIT_GATE_NOT_PASSED)
 
 
 @app.command()

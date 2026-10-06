@@ -54,7 +54,8 @@ Recommendation  kind(suppress|narrow_rule|rule_pack|strategy), target, rationale
                 lost_detection_case_ids[], proposed_change, proposed_command
                 (suppress = LLM-judge findings only; regex/CEL rules need narrow_rule, see
                 docs/DEFENSECLAW_REFERENCE.md)
-GateReport      ts, criteria[{name, threshold, observed, pass}], overall_pass, proposed_command
+GateReport      run_id, evaluate_on, criteria[{name, threshold, observed, status(PASS|FAIL|
+                UNVERIFIED), detail}], overall (PASS only if all PASS), proposed_command (PASS only)
 ```
 
 `guardrail_snapshot` stores the output of `defenseclaw status --json` and

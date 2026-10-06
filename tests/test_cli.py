@@ -13,6 +13,7 @@ runner = CliRunner()
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SEED = REPO_ROOT / "redteam" / "corpus" / "seed.jsonl"
+SEED_CASES = sum(1 for line in SEED.read_text(encoding="ascii").splitlines() if line.strip())
 STUB_COMMANDS = ["doctor", "gate", "ingest"]
 ALL_COMMANDS = [*STUB_COMMANDS, "run", "runs", "score"]
 
@@ -76,7 +77,7 @@ def _run(lab: dict[str, Any], *extra: str) -> Any:
 def test_run_seed_corpus_against_mock(lab: dict[str, Any]) -> None:
     result = _run(lab, "--notes", "baseline")
     assert result.exit_code == 0, result.output
-    assert ": 166 cases, 0 target errors" in result.output
+    assert f": {SEED_CASES} cases, 0 target errors" in result.output
     run = Store(lab["db"]).get_run("latest")
     assert run.finished_at is not None and run.notes == "baseline"
 
@@ -86,7 +87,7 @@ def test_runs_lists_completed_run(lab: dict[str, Any]) -> None:
     result = runner.invoke(app, ["runs", "--config", str(lab["config"])])
     assert result.exit_code == 0
     assert "lab-mock" in result.output
-    assert "166/166" in result.output and "complete" in result.output
+    assert f"{SEED_CASES}/{SEED_CASES}" in result.output and "complete" in result.output
 
 
 def test_run_warns_when_snapshot_unavailable(lab: dict[str, Any]) -> None:
@@ -163,10 +164,10 @@ def test_run_reports_canary_leaks(lab: dict[str, Any], monkeypatch: pytest.Monke
     monkeypatch.setattr(cli, "build_target", lambda settings: leaky)
     result = _run(lab)
     assert result.exit_code == 0
-    assert "166 canary leaks" in result.output
+    assert f"{SEED_CASES} canary leaks" in result.output
     assert "leaked a planted canary" in result.output
     listing = runner.invoke(app, ["runs", "--config", str(lab["config"])])
-    assert "  166  complete" in listing.output
+    assert f"  {SEED_CASES}  complete" in listing.output
 
 
 def test_run_and_runs_refuse_old_schema(lab: dict[str, Any]) -> None:
@@ -192,7 +193,7 @@ def test_run_with_redaction_enabled(lab: dict[str, Any], monkeypatch: pytest.Mon
 
     result = _run(lab)
     assert result.exit_code == 0, result.output
-    assert "166 canary leaks" in result.output and "(responses redacted)" in result.output
+    assert f"{SEED_CASES} canary leaks" in result.output and "(responses redacted)" in result.output
     assert b"PRIVATE-REPLY-777" not in lab["db"].read_bytes()
 
 
@@ -203,7 +204,7 @@ def test_score_latest_after_run(lab: dict[str, Any]) -> None:
     _run(lab)
     result = runner.invoke(app, ["score", "--run", "latest", "--config", str(lab["config"])])
     assert result.exit_code == 0, result.output
-    assert "cases 166 | scored 166" in result.output
+    assert f"cases {SEED_CASES} | scored {SEED_CASES}" in result.output
     assert "no DefenseClaw verdicts in this run's window" in result.output
     for section in ("OVERALL", "CATEGORY", "EXPECTED SEVERITY"):
         assert section in result.output
@@ -216,7 +217,7 @@ def test_score_json(lab: dict[str, Any]) -> None:
     result = runner.invoke(app, ["score", "--json", "--config", str(lab["config"])])
     assert result.exit_code == 0
     data = json.loads(result.stdout)
-    assert data["cases_total"] == 166 and data["verdicts_in_window"] == 0
+    assert data["cases_total"] == SEED_CASES and data["verdicts_in_window"] == 0
     assert data["run"]["snapshot_available"] is True
 
 

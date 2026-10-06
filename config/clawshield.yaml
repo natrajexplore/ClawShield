@@ -22,7 +22,7 @@ targets:
 runner:
   inter_case_delay_ms: 1500   # helps time-window correlation
   correlation_grace_s: 3
-  max_cases_per_run: 500
+  max_cases_per_run: 1000    # corpus is ~500 cases; room for promptfoo/garak imports
 
 canaries:
   - CANARY-7F3A

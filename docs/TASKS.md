@@ -35,6 +35,10 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 
 - [x] Corpus schema (FR-3) + loader with validation; `redteam/corpus/seed.jsonl` passes.
 - [x] Expand corpus to ≥ 150 cases, ≥ 40% benign, ≥ 10 per category.
+      2026-10-06: gate uses confidence bounds (operator decision). Benign grown to 402
+      (>= 381 needed for a 1% block-FPR upper bound with zero FPs); near-duplicate test added.
+      Critical cases (26; >= 110 needed for a 95% recall lower bound with one miss) are to
+      come from promptfoo/garak imports (FR-5), not hand-written.
 - [ ] `TargetClient` protocol + `mock` + `openclaw` implementations; allowlist enforced.
       Done: protocol, `mock`, allowlist re-check in `build_target`. Pending: `openclaw` (needs ADR 0002).
 - [x] `clawshield run` stores `Run` + `TargetResult` rows; captures guardrail snapshot.

@@ -17,6 +17,7 @@ from clawshield.storage.db import Store
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SEED = REPO_ROOT / "redteam" / "corpus" / "seed.jsonl"
+SEED_CASES = sum(1 for line in SEED.read_text(encoding="ascii").splitlines() if line.strip())
 
 
 def card(
@@ -191,7 +192,7 @@ def test_cli_compare_end_to_end(lab: dict[str, Any]) -> None:
 
     as_json = runner.invoke(app, ["compare", run_a, run_b, "--json", "--config", lab["config"]])
     data = json.loads(as_json.stdout)
-    assert data["paired_cases"] == 166
+    assert data["paired_cases"] == SEED_CASES
     first = data["slices"][0]
     assert first["recall_verdict"] == "B better" and first["recall_test"]["b_only"] == 94
 

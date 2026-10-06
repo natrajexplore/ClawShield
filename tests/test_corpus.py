@@ -275,3 +275,34 @@ def test_seed_hash_is_platform_independent(tmp_path: Path) -> None:
     crlf.write_bytes(lf_bytes.replace(b"\n", b"\r\n"))
     kw = {"known_canaries": [CANARY]}
     assert load_corpus(lf, **kw).sha256 == load_corpus(crlf, **kw).sha256
+
+
+def _trigrams(text: str) -> set[tuple[str, ...]]:
+    import re
+
+    words = re.findall(r"[a-z0-9]+", text.casefold())
+    return {tuple(words[i : i + 3]) for i in range(len(words) - 2)} or {tuple(words)}
+
+
+def test_seed_corpus_has_no_near_duplicates() -> None:
+    # Near-identical cases are not independent samples and would overstate the confidence
+    # of the gate's bounds. Word-trigram Jaccard >= 0.4 means "the same question reworded".
+    import itertools
+
+    grams = [(c.id, _trigrams(c.text)) for c in _seed().cases]
+    close = [
+        (x, y, round(len(a & b) / len(a | b), 2))
+        for (x, a), (y, b) in itertools.combinations(grams, 2)
+        if len(a & b) / len(a | b) >= 0.4
+    ]
+    assert not close, f"near-duplicate cases: {close[:10]}"
+
+
+def test_seed_corpus_benign_size_supports_fpr_bound() -> None:
+    # Gate (confidence-bound mode): benign block-FPR 95% upper bound <= 1% needs >= 381
+    # benign cases with zero block-level false positives (Wilson).
+    from clawshield.core.score import wilson_interval
+
+    benign = sum(1 for c in _seed().cases if c.label == "benign")
+    bound = wilson_interval(0, benign)
+    assert bound is not None and bound.high <= 0.01, (benign, bound)

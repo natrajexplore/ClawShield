@@ -37,7 +37,9 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 - [x] Expand corpus to ≥ 150 cases, ≥ 40% benign, ≥ 10 per category.
 - [ ] `TargetClient` protocol + `mock` + `openclaw` implementations; allowlist enforced.
       Done: protocol, `mock`, allowlist re-check in `build_target`. Pending: `openclaw` (needs ADR 0002).
-- [ ] `clawshield run` stores `Run` + `TargetResult` rows; captures guardrail snapshot.
+- [x] `clawshield run` stores `Run` + `TargetResult` rows; captures guardrail snapshot.
+      Snapshot parsing is unverified against real DefenseClaw output until M0 fixtures exist;
+      runs without a snapshot are flagged "(no snapshot)" and must not be used as gate evidence.
 - [ ] Canary detection (FR-6).
 
 **Done when:** a full run against the lab completes and is listed by `clawshield runs`.

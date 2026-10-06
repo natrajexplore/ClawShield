@@ -4,14 +4,39 @@ Commands not yet implemented fail closed: they exit non-zero so that CI and
 scripts never mistake a stub for a passing check (especially `gate`).
 """
 
+import re
 from pathlib import Path
 from typing import Annotated, NoReturn
 
 import typer
 
 from clawshield import __version__
+from clawshield.config import DEFAULT_CONFIG_PATH, ConfigError, load_settings
+from clawshield.redteam.corpus import CorpusError, load_corpus
+from clawshield.redteam.runner import RunError, execute_run
+from clawshield.sources.snapshot import capture_guardrail_snapshot
+from clawshield.storage.db import Store
+from clawshield.targets.base import TargetError, build_target
 
+EXIT_ERROR = 1
 EXIT_NOT_IMPLEMENTED = 2
+MAX_NOTES_CHARS = 1000
+
+ConfigOption = Annotated[Path, typer.Option("--config", help="Path to clawshield.yaml.")]
+
+_UNPRINTABLE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+
+
+def printable(text: str) -> str:
+    """Escape control characters so stored text cannot inject terminal escape codes."""
+    return _UNPRINTABLE.sub(lambda m: f"\\x{ord(m.group()):02x}", text)
+
+
+def _fail(message: str) -> NoReturn:
+    safe = "\n".join(printable(line) for line in message.split("\n"))
+    typer.echo(f"error: {safe}", err=True)
+    raise typer.Exit(code=EXIT_ERROR)
+
 
 app = typer.Typer(
     name="clawshield",
@@ -59,9 +84,69 @@ def run(
         Path,
         typer.Option(help="Labeled JSONL corpus to replay against the guarded target."),
     ] = Path("redteam/corpus/seed.jsonl"),
+    config: ConfigOption = DEFAULT_CONFIG_PATH,
+    notes: Annotated[str, typer.Option(help="Free-text note stored with the run.")] = "",
 ) -> None:
     """Replay the attack corpus against the allowlisted target (FR-4)."""
-    _not_implemented("run", "M2")
+    if len(notes) > MAX_NOTES_CHARS:
+        _fail(f"--notes is longer than {MAX_NOTES_CHARS} characters")
+    try:
+        settings = load_settings(config)
+        loaded = load_corpus(corpus, known_canaries=settings.canaries)
+        target = build_target(settings)
+        store = Store(settings.storage.db_path)
+        snapshot = capture_guardrail_snapshot(settings.defenseclaw)
+        report = execute_run(
+            settings=settings,
+            corpus=loaded,
+            target=target,
+            store=store,
+            snapshot=snapshot,
+            notes=notes,
+        )
+    except (ConfigError, CorpusError, TargetError, RunError) as exc:
+        _fail(str(exc))
+
+    if not snapshot["available"]:
+        typer.echo(
+            "warning: guardrail snapshot unavailable; this run cannot serve as gate evidence:",
+            err=True,
+        )
+        for error in snapshot["errors"]:
+            typer.echo(f"  {printable(error)}", err=True)
+    typer.echo(
+        f"run {report.run_id}: {report.cases} cases, {report.errors} target errors, "
+        f"{report.duration_s:.1f}s"
+    )
+
+
+@app.command()
+def runs(
+    config: ConfigOption = DEFAULT_CONFIG_PATH,
+    limit: Annotated[int, typer.Option(min=1, max=1000, help="Rows to show.")] = 20,
+) -> None:
+    """List recent runs, newest first."""
+    try:
+        settings = load_settings(config)
+    except ConfigError as exc:
+        _fail(str(exc))
+    if not settings.storage.db_path.exists():
+        typer.echo("no runs yet")
+        return
+    listings = Store(settings.storage.db_path).list_runs(limit)
+    if not listings:
+        typer.echo("no runs yet")
+        return
+    typer.echo(f"{'RUN':<24} {'STARTED (UTC)':<20} {'TARGET':<20} {'CASES':>7} {'ERR':>5}  STATUS")
+    for item in listings:
+        r = item.run
+        status = "complete" if item.complete else "INCOMPLETE"
+        snap = "" if r.guardrail_snapshot.get("available") else " (no snapshot)"
+        typer.echo(
+            f"{r.id:<24} {r.started_at:%Y-%m-%d %H:%M:%S}  "
+            f"{printable(r.target_name)[:20]:<20} {item.results:>3}/{r.case_count:<3} "
+            f"{item.errors:>5}  {status}{snap}"
+        )
 
 
 @app.command()

@@ -63,6 +63,7 @@ uv run bandit -q -c pyproject.toml -r src   # security lint
 uv run pip-audit --skip-editable           # dependency CVEs
 uv run clawshield doctor         # checks DefenseClaw + target reachability
 uv run clawshield run --corpus redteam/corpus/seed.jsonl
+uv run clawshield runs                    # list runs; INCOMPLETE / (no snapshot) flagged
 uv run clawshield score --run latest
 uv run clawshield gate
 uv run uvicorn clawshield.console.app:app --reload --port 8088

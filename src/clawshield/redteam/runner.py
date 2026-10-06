@@ -12,6 +12,7 @@ from typing import Any
 
 from clawshield.config import Settings
 from clawshield.core.canary import find_canary_leaks
+from clawshield.core.models import DeclaredConfig
 from clawshield.redteam.corpus import Corpus
 from clawshield.storage.db import RunRow, Store
 from clawshield.targets.base import Clock, TargetClient, utc_now
@@ -43,6 +44,7 @@ def execute_run(
     store: Store,
     snapshot: Mapping[str, Any],
     notes: str = "",
+    declared: DeclaredConfig | None = None,
     sleep: Callable[[float], None] = time.sleep,
     clock: Clock = utc_now,
 ) -> RunReport:
@@ -69,6 +71,7 @@ def execute_run(
             case_count=len(corpus.cases),
             guardrail_snapshot=dict(snapshot),
             notes=notes,
+            declared_config=declared.model_dump() if declared else None,
         )
     )
 

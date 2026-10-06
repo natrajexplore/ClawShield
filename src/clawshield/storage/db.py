@@ -26,7 +26,7 @@ from sqlmodel import Field, Session, SQLModel, col, create_engine, select
 from clawshield.core.canary import CanaryHit, Method
 from clawshield.core.models import TargetResult, Verdict
 
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 
 REDACTED_PLACEHOLDER = "[redacted]"
 
@@ -63,6 +63,7 @@ class RunRow(SQLModel, table=True):
     guardrail_snapshot: dict[str, Any] = Field(sa_type=JSON)
     notes: str = ""
     responses_redacted: bool = False
+    declared_config: dict[str, str] | None = Field(default=None, sa_type=JSON)
 
 
 class ResultRow(SQLModel, table=True):

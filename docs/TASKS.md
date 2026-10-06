@@ -84,7 +84,11 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       (judge finding -> `finding_suppressions` YAML; regex/CEL rule -> narrow in a custom
       pack, since suppressions never apply to rules), benign evidence, and the malicious
       cases that rule alone catches.
-- [ ] Rule pack / detection strategy recommendation from A/B (FR-14).
+- [x] Rule pack / detection strategy recommendation from A/B (FR-14).
+      `clawshield run --rule-pack P --detection-strategy S` declares a run's config;
+      `clawshield recommend-config A B` applies explicit rules (critical-recall veto,
+      adopt / keep / trade-off) and proposes an observe-mode command. Declared config is
+      to be cross-checked against the guardrail snapshot once its format is verified.
 - [ ] Proposed commands generated, never executed (FR-15) — test asserts no subprocess call.
       Done for the tuner (AST import check + subprocess trap); gate commands pending.
 - [ ] Gate (FR-16, FR-17) with configurable thresholds; observe duration from first observe-mode run.

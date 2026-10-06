@@ -6,6 +6,7 @@ scripts never mistake a stub for a passing check (especially `gate`).
 
 import json
 import re
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, NoReturn
 
@@ -13,6 +14,7 @@ import typer
 
 from clawshield import __version__
 from clawshield.config import DEFAULT_CONFIG_PATH, ConfigError, load_settings
+from clawshield.core.models import DeclaredConfig
 from clawshield.core.score import Interval, SliceScore
 from clawshield.redteam.corpus import CorpusError, load_corpus
 from clawshield.redteam.runner import RunError, execute_run
@@ -29,10 +31,25 @@ from clawshield.sources.snapshot import capture_guardrail_snapshot
 from clawshield.storage.db import RunNotFoundError, Store, StoreSchemaError
 from clawshield.targets.base import TargetError, build_target
 from clawshield.tuner.recommend import Recommendation, recommend_suppressions
+from clawshield.tuner.strategy import recommend_config
 
 EXIT_ERROR = 1
 EXIT_NOT_IMPLEMENTED = 2
 MAX_NOTES_CHARS = 1000
+
+
+class RulePackChoice(StrEnum):
+    default = "default"
+    strict = "strict"
+    permissive = "permissive"
+    custom = "custom"
+
+
+class StrategyChoice(StrEnum):
+    regex_only = "regex_only"
+    regex_judge = "regex_judge"
+    judge_first = "judge_first"
+
 
 ConfigOption = Annotated[Path, typer.Option("--config", help="Path to clawshield.yaml.")]
 
@@ -98,8 +115,23 @@ def run(
     ] = Path("redteam/corpus/seed.jsonl"),
     config: ConfigOption = DEFAULT_CONFIG_PATH,
     notes: Annotated[str, typer.Option(help="Free-text note stored with the run.")] = "",
+    rule_pack: Annotated[
+        RulePackChoice | None,
+        typer.Option("--rule-pack", help="Declare the active DefenseClaw rule pack (FR-14)."),
+    ] = None,
+    strategy: Annotated[
+        StrategyChoice | None,
+        typer.Option("--detection-strategy", help="Declare the active detection strategy."),
+    ] = None,
 ) -> None:
     """Replay the attack corpus against the allowlisted target (FR-4)."""
+    if (rule_pack is None) != (strategy is None):
+        _fail("declare both --rule-pack and --detection-strategy, or neither")
+    declared = (
+        DeclaredConfig(rule_pack=rule_pack.value, detection_strategy=strategy.value)
+        if rule_pack is not None and strategy is not None
+        else None
+    )
     if len(notes) > MAX_NOTES_CHARS:
         _fail(f"--notes is longer than {MAX_NOTES_CHARS} characters")
     try:
@@ -115,6 +147,7 @@ def run(
             store=store,
             snapshot=snapshot,
             notes=notes,
+            declared=declared,
         )
     except (ConfigError, CorpusError, TargetError, RunError, StoreSchemaError) as exc:
         _fail(str(exc))
@@ -411,6 +444,56 @@ def tune(
     if recs:
         typer.echo()
         typer.echo("Re-run the corpus after any change and compare: clawshield compare <old> <new>")
+
+
+@app.command("recommend-config")
+def recommend_config_cmd(
+    run_a: Annotated[str, typer.Argument(help="Current configuration's run (A).")],
+    run_b: Annotated[str, typer.Argument(help="Candidate configuration's run (B).")],
+    config: ConfigOption = DEFAULT_CONFIG_PATH,
+    corpus: Annotated[
+        Path | None,
+        typer.Option(help="Corpus file if it moved; must match both runs' corpus hash."),
+    ] = None,
+    as_json: Annotated[bool, typer.Option("--json", help="Machine-readable output.")] = False,
+) -> None:
+    """Recommend a rule pack / detection strategy from an A/B pair (FR-14). Never executed."""
+    try:
+        settings = load_settings(config)
+        if not settings.storage.db_path.exists():
+            _fail("no runs yet; run `clawshield run` first")
+        rc = compare_runs(Store(settings.storage.db_path), settings, run_a, run_b, corpus)
+    except RunNotFoundError as exc:
+        _fail(f"run {exc.args[0]!r} not found")
+    except (ConfigError, CorpusError, StoreSchemaError, ScoringError) as exc:
+        _fail(str(exc))
+    declared = [
+        DeclaredConfig.model_validate(rs.run.declared_config) if rs.run.declared_config else None
+        for rs in (rc.a, rc.b)
+    ]
+    rec = recommend_config(
+        rc.comparison, declared[0], declared[1], connector=settings.defenseclaw.connector
+    )
+    if as_json:
+        payload = {
+            "a": rc.a.run.id, "b": rc.b.run.id, "decision": rec.decision,
+            "reasons": list(rec.reasons),
+            "config": rec.config.model_dump() if rec.config else None,
+            "proposed_command": rec.proposed_command,
+        }  # fmt: skip
+        typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    for tag, rs, cfg in (("A", rc.a, declared[0]), ("B", rc.b, declared[1])):
+        shown = f"{cfg.rule_pack} / {cfg.detection_strategy}" if cfg else "not declared"
+        typer.echo(f"{tag}  {rs.run.id}  config: {shown}  notes: {printable(rs.run.notes) or '-'}")
+    _warn_overlap(rc.a)
+    _warn_overlap(rc.b)
+    typer.echo(f"decision: {rec.decision}")
+    for reason in rec.reasons:
+        typer.echo(f"  - {reason}")
+    if rec.proposed_command:
+        typer.echo("proposed (review, then run yourself; stays in observe mode):")
+        typer.echo(f"  {rec.proposed_command}")
 
 
 @app.command()

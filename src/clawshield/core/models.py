@@ -141,3 +141,20 @@ def stable_verdict_id(source: str, raw: Mapping[str, Any], native_id: str | None
         return f"{source}:{native_id}"
     canonical = json.dumps(raw, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
     return f"{source}:sha256:{hashlib.sha256(canonical.encode('ascii')).hexdigest()}"
+
+
+RulePack = Literal["default", "strict", "permissive", "custom"]
+DetectionStrategy = Literal["regex_only", "regex_judge", "judge_first"]
+
+
+class DeclaredConfig(BaseModel):
+    """Guardrail configuration the operator declares for a run (FR-14).
+
+    Values per docs/DEFENSECLAW_REFERENCE.md. Declared, not observed: the gate cross-checks
+    it against the guardrail snapshot once that format is verified (M0 fixtures).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    rule_pack: RulePack
+    detection_strategy: DetectionStrategy

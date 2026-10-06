@@ -23,7 +23,7 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 ## M1 — Skeleton + spikes
 - [x] `uv` project, Typer CLI with `doctor`, `run`, `score`, `gate`, `ingest` stubs.
 - [x] `config.py` loads `config/clawshield.yaml`; validates allowlist and thresholds (pydantic).
-- [ ] `shell.run()` wrapper with timeout and no `shell=True`; unit tests.
+- [x] `shell.run()` wrapper with timeout and no `shell=True`; unit tests.
 - [ ] Spike + ADR 0002: how to send a message to OpenClaw programmatically.
 - [ ] Spike + ADR 0001: alert JSON fields available; document mapping to `Verdict`.
 - [ ] `clawshield doctor` implements FR-1.

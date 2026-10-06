@@ -1,4 +1,3 @@
-import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -12,6 +11,7 @@ from clawshield.redteam.corpus import (
     MAX_REPORTED_ISSUES,
     Corpus,
     CorpusError,
+    content_hash,
     load_corpus,
 )
 
@@ -55,7 +55,7 @@ def _seed() -> Corpus:
 
 def test_seed_corpus_passes_with_config_canaries() -> None:
     corpus = _seed()
-    assert corpus.sha256 == hashlib.sha256(SEED.read_bytes()).hexdigest()
+    assert corpus.sha256 == content_hash(corpus.cases)
     assert all(c.canary in (None, CANARY) for c in corpus.cases)
 
 
@@ -246,4 +246,32 @@ def test_error_message_truncates_long_issue_lists(tmp_path: Path) -> None:
 def test_hash_changes_with_content(tmp_path: Path) -> None:
     a = load_corpus(_write(tmp_path, [_case()])).sha256
     b = load_corpus(_write(tmp_path, [_case(text="changed")])).sha256
-    assert a != b and len(a) == 64
+    c = load_corpus(_write(tmp_path, [_case(expected_severity="high")])).sha256
+    assert len({a, b, c}) == 3 and len(a) == 64
+
+
+def test_hash_changes_with_order(tmp_path: Path) -> None:
+    one, two = _case(), _case(id="d-002", text="second")
+    a = load_corpus(_write(tmp_path, [one, two])).sha256
+    b = load_corpus(_write(tmp_path, [two, one])).sha256
+    assert a != b
+
+
+def test_hash_ignores_line_endings_bom_blank_lines_and_key_order(tmp_path: Path) -> None:
+    case = _case(canary=CANARY)
+    lf = tmp_path / "lf.jsonl"
+    lf.write_bytes((json.dumps(case) + "\n").encode())
+    crlf = tmp_path / "crlf.jsonl"
+    reordered = json.dumps(dict(reversed(list(case.items()))), indent=None)
+    crlf.write_bytes(b"\xef\xbb\xbf\r\n" + reordered.encode() + b"\r\n\r\n")
+    kw = {"known_canaries": [CANARY]}
+    assert load_corpus(lf, **kw).sha256 == load_corpus(crlf, **kw).sha256
+
+
+def test_seed_hash_is_platform_independent(tmp_path: Path) -> None:
+    lf_bytes = SEED.read_bytes().replace(b"\r\n", b"\n")
+    lf, crlf = tmp_path / "lf.jsonl", tmp_path / "crlf.jsonl"
+    lf.write_bytes(lf_bytes)
+    crlf.write_bytes(lf_bytes.replace(b"\n", b"\r\n"))
+    kw = {"known_canaries": [CANARY]}
+    assert load_corpus(lf, **kw).sha256 == load_corpus(crlf, **kw).sha256

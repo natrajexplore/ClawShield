@@ -134,4 +134,19 @@ def load_corpus(path: Path, *, known_canaries: Iterable[str] = ()) -> Corpus:
         issues.append("corpus contains no cases")
     if issues:
         raise CorpusError(path, issues)
-    return Corpus(path=path, sha256=hashlib.sha256(data).hexdigest(), cases=tuple(cases))
+    return Corpus(path=path, sha256=content_hash(cases), cases=tuple(cases))
+
+
+def content_hash(cases: Iterable[Case]) -> str:
+    """SHA-256 over the cases in canonical form, in file order.
+
+    Independent of line endings, BOM, blank lines and key order, so the same corpus
+    hashes identically on Windows (CRLF checkout) and Linux; any change to a case changes it.
+    """
+    digest = hashlib.sha256()
+    for case in cases:
+        canonical = json.dumps(
+            case.model_dump(mode="json"), sort_keys=True, ensure_ascii=True, separators=(",", ":")
+        )
+        digest.update(canonical.encode("ascii") + b"\n")
+    return digest.hexdigest()

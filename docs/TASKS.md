@@ -36,6 +36,7 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 - [x] Corpus schema (FR-3) + loader with validation; `redteam/corpus/seed.jsonl` passes.
 - [x] Expand corpus to ≥ 150 cases, ≥ 40% benign, ≥ 10 per category.
 - [ ] `TargetClient` protocol + `mock` + `openclaw` implementations; allowlist enforced.
+      Done: protocol, `mock`, allowlist re-check in `build_target`. Pending: `openclaw` (needs ADR 0002).
 - [ ] `clawshield run` stores `Run` + `TargetResult` rows; captures guardrail snapshot.
 - [ ] Canary detection (FR-6).
 

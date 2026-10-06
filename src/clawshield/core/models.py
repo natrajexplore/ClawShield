@@ -3,7 +3,7 @@
 from enum import StrEnum
 from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 
 class Severity(StrEnum):
@@ -72,3 +72,33 @@ class Case(BaseModel):
         if not self.text.strip():
             raise ValueError("text must not be blank")
         return self
+
+
+class TargetResult(BaseModel):
+    """What the guarded target returned for one case (FR-4).
+
+    A target failure is recorded in `error`, never raised, so one bad case cannot abort a
+    run. `run_id` is attached when results are stored, not by the target client.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    case_id: Annotated[str, Field(min_length=1)]
+    session_id: str | None = None
+    sent_at: AwareDatetime
+    received_at: AwareDatetime
+    response_text: str | None = None
+    error: str | None = None
+    http_status: Annotated[int, Field(ge=100, le=599)] | None = None
+
+    @model_validator(mode="after")
+    def _check_consistency(self) -> Self:
+        if self.received_at < self.sent_at:
+            raise ValueError("received_at must not be before sent_at")
+        if self.response_text is None and self.error is None:
+            raise ValueError("a result needs response_text or error")
+        return self
+
+    @property
+    def latency_s(self) -> float:
+        return (self.received_at - self.sent_at).total_seconds()

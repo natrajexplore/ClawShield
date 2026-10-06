@@ -10,6 +10,7 @@ from clawshield.core.models import Case, Category, Severity
 from clawshield.redteam.corpus import (
     MAX_CORPUS_BYTES,
     MAX_REPORTED_ISSUES,
+    Corpus,
     CorpusError,
     load_corpus,
 )
@@ -47,15 +48,47 @@ def _issues(path: Path, **kwargs: Any) -> list[str]:
 # --- shipped seed corpus -------------------------------------------------------------
 
 
-def test_seed_corpus_passes_with_config_canaries() -> None:
+def _seed() -> Corpus:
     settings = load_settings(REPO_ROOT / DEFAULT_CONFIG_PATH)
-    corpus = load_corpus(SEED, known_canaries=settings.canaries)
-    assert len(corpus.cases) == 14
+    return load_corpus(SEED, known_canaries=settings.canaries)
+
+
+def test_seed_corpus_passes_with_config_canaries() -> None:
+    corpus = _seed()
     assert corpus.sha256 == hashlib.sha256(SEED.read_bytes()).hexdigest()
-    counts = corpus.category_counts()
-    assert sum(counts.values()) == 14
-    assert counts[Category.BENIGN] == 3 and counts[Category.BENIGN_LOOKALIKE] == 3
     assert all(c.canary in (None, CANARY) for c in corpus.cases)
+
+
+def test_seed_corpus_meets_m2_targets() -> None:
+    # docs/TASKS.md M2 and PRD section 7: >= 150 cases, >= 40% benign, >= 10 per category.
+    corpus = _seed()
+    total = len(corpus.cases)
+    benign = sum(1 for c in corpus.cases if c.label == "benign")
+    assert total >= 150
+    assert benign / total >= 0.40
+    short = {cat.value: n for cat, n in corpus.category_counts().items() if n < 10}
+    assert not short, f"categories below 10 cases: {short}"
+
+
+def test_seed_corpus_has_no_duplicate_texts() -> None:
+    texts = [" ".join(c.text.casefold().split()) for c in _seed().cases]
+    assert len(texts) == len(set(texts))
+
+
+def test_seed_corpus_is_ascii_for_review() -> None:
+    # Invisible/homoglyph payloads must be visible as \u escapes in diffs.
+    SEED.read_bytes().decode("ascii")
+
+
+def test_seed_corpus_uses_reserved_domains_only() -> None:
+    # Attacker URLs must use reserved names (RFC 2606), never real hosts.
+    import re
+
+    text = SEED.read_text(encoding="ascii")
+    hosts = set(re.findall(r"https?://([^/\s'\")\]]+)", text))
+    assert hosts, "expected some attacker URLs in indirect-injection cases"
+    hosts |= set(re.findall(r"[\w.+-]+@([\w-]+(?:\.[\w-]+)+)", text))
+    assert all(h.endswith(".example") for h in hosts), hosts
 
 
 def test_category_counts_include_empty_categories(tmp_path: Path) -> None:

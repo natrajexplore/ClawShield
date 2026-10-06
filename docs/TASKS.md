@@ -34,7 +34,7 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 > Started ahead of M1's lab-dependent spikes (ADR 0001/0002, `doctor`), which wait for the Linux lab.
 
 - [x] Corpus schema (FR-3) + loader with validation; `redteam/corpus/seed.jsonl` passes.
-- [ ] Expand corpus to ≥ 150 cases, ≥ 40% benign, ≥ 10 per category.
+- [x] Expand corpus to ≥ 150 cases, ≥ 40% benign, ≥ 10 per category.
 - [ ] `TargetClient` protocol + `mock` + `openclaw` implementations; allowlist enforced.
 - [ ] `clawshield run` stores `Run` + `TargetResult` rows; captures guardrail snapshot.
 - [ ] Canary detection (FR-6).

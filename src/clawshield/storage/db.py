@@ -3,6 +3,8 @@
 - All queries go through the ORM with bound parameters; no SQL is built from strings.
 - Timestamps are stored as UTC and returned timezone-aware (SQLite drops tzinfo).
 - On POSIX the DB file is created owner-only (0600): it holds attack prompts and responses.
+- With `redact_responses`, response text never reaches the DB: rows hold a fixed
+  placeholder (no hash: short responses would be guessable) and `response_redacted`.
 - The schema version is kept in `PRAGMA user_version`; a mismatched DB is refused with a
   clear message instead of failing mid-run on a missing column.
 """
@@ -23,7 +25,9 @@ from sqlmodel import Field, Session, SQLModel, col, create_engine, select
 from clawshield.core.canary import CanaryHit, Method
 from clawshield.core.models import TargetResult
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
+
+REDACTED_PLACEHOLDER = "[redacted]"
 
 
 class UTCDateTime(TypeDecorator[datetime]):
@@ -57,6 +61,7 @@ class RunRow(SQLModel, table=True):
     case_count: int
     guardrail_snapshot: dict[str, Any] = Field(sa_type=JSON)
     notes: str = ""
+    responses_redacted: bool = False
 
 
 class ResultRow(SQLModel, table=True):
@@ -74,6 +79,7 @@ class ResultRow(SQLModel, table=True):
     http_status: int | None = None
     canary_leaked: bool = False
     canary_hits: list[dict[str, str]] = Field(default_factory=list, sa_type=JSON)
+    response_redacted: bool = False
 
 
 @dataclass(frozen=True)
@@ -112,7 +118,8 @@ def _restrict_permissions(path: Path) -> None:
 
 
 class Store:
-    def __init__(self, db_path: Path) -> None:
+    def __init__(self, db_path: Path, *, redact_responses: bool = False) -> None:
+        self.redact_responses = redact_responses
         db_path.parent.mkdir(parents=True, exist_ok=True)
         _restrict_permissions(db_path)
         self.engine: Engine = create_engine(URL.create("sqlite", database=str(db_path)))
@@ -135,6 +142,7 @@ class Store:
             )
 
     def create_run(self, run: RunRow) -> None:
+        run.responses_redacted = self.redact_responses
         with Session(self.engine) as session:
             session.add(run)
             session.commit()
@@ -142,11 +150,17 @@ class Store:
     def add_result(
         self, run_id: str, result: TargetResult, canary_hits: Sequence[CanaryHit] = ()
     ) -> None:
+        """Store one result. Canary hits must be computed on the full text beforehand."""
+        fields = result.model_dump()
+        redacted = self.redact_responses and result.response_text is not None
+        if redacted:
+            fields["response_text"] = REDACTED_PLACEHOLDER
         row = ResultRow(
             run_id=run_id,
             canary_leaked=bool(canary_hits),
             canary_hits=[{"canary": h.canary, "method": h.method} for h in canary_hits],
-            **result.model_dump(),
+            response_redacted=redacted,
+            **fields,
         )
         with Session(self.engine) as session:
             session.add(row)
@@ -179,7 +193,9 @@ class Store:
             rows = session.exec(stmt).all()
         return [
             TargetResult.model_validate(
-                row.model_dump(exclude={"id", "run_id", "canary_leaked", "canary_hits"})
+                row.model_dump(
+                    exclude={"id", "run_id", "canary_leaked", "canary_hits", "response_redacted"}
+                )
             )
             for row in rows
         ]

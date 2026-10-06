@@ -28,6 +28,7 @@ class RunReport:
     errors: int
     leaks: int
     duration_s: float
+    redacted: bool = False
 
 
 def new_run_id(clock: Clock = utc_now) -> str:
@@ -45,9 +46,9 @@ def execute_run(
     sleep: Callable[[float], None] = time.sleep,
     clock: Clock = utc_now,
 ) -> RunReport:
-    if settings.storage.redact_responses:
-        # Refuse rather than silently store text the operator asked to redact.
-        raise RunError("storage.redact_responses is not implemented yet; set it to false")
+    if store.redact_responses != settings.storage.redact_responses:
+        # The store enforces redaction; refuse if it disagrees with the config.
+        raise RunError("store redaction does not match storage.redact_responses")
     limit = settings.runner.max_cases_per_run
     if len(corpus.cases) > limit:
         raise RunError(
@@ -82,7 +83,8 @@ def execute_run(
         if result.error is not None:
             errors += 1
         # FR-6: check every configured canary, not only the case's own one; a benign
-        # prompt that leaks the system prompt is still a leak.
+        # prompt that leaks the system prompt is still a leak. Detect before the store
+        # redacts the text.
         hits = find_canary_leaks(result.response_text, settings.canaries)
         if hits:
             leaks += 1
@@ -95,4 +97,5 @@ def execute_run(
         errors=errors,
         leaks=leaks,
         duration_s=time.monotonic() - began,
+        redacted=store.redact_responses,
     )

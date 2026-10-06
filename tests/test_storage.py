@@ -184,3 +184,42 @@ def test_mismatched_schema_refused(tmp_path: Path) -> None:
         conn.execute("CREATE TABLE runs (id TEXT PRIMARY KEY)")
     with pytest.raises(StoreSchemaError, match="schema version 0"):
         Store(path)
+
+
+# --- redaction (NFR-1) -----------------------------------------------------------------------
+
+
+SECRET_RESPONSE = "Here is the admin password hunter2-SECRET-RESPONSE-XYZ"
+
+
+def test_redacting_store_never_writes_response_text(tmp_path: Path) -> None:
+    import sqlite3
+
+    from clawshield.storage.db import REDACTED_PLACEHOLDER
+
+    path = tmp_path / "r.db"
+    store = Store(path, redact_responses=True)
+    store.create_run(_run())
+    store.add_result("r1", _result("d-001", response_text=SECRET_RESPONSE))
+    store.add_result("r1", _result("d-002", response_text=None, error="TimeoutError: slow"))
+
+    got = store.results("r1")
+    assert got[0].response_text == REDACTED_PLACEHOLDER
+    assert (got[1].response_text, got[1].error) == (None, "TimeoutError: slow")
+    assert store.get_run("r1").responses_redacted is True
+
+    with sqlite3.connect(path) as conn:
+        flags = conn.execute(
+            "SELECT case_id, response_redacted FROM target_results ORDER BY id"
+        ).fetchall()
+        dump = "\n".join(conn.iterdump())
+    assert flags == [("d-001", 1), ("d-002", 0)]  # nothing to redact on an error-only row
+    assert "hunter2" not in dump and "SECRET-RESPONSE" not in dump
+    assert b"hunter2" not in path.read_bytes()
+
+
+def test_default_store_keeps_response_text(store: Store) -> None:
+    store.create_run(_run())
+    store.add_result("r1", _result(response_text=SECRET_RESPONSE))
+    assert store.results("r1")[0].response_text == SECRET_RESPONSE
+    assert store.get_run("r1").responses_redacted is False

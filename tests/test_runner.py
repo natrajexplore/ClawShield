@@ -115,11 +115,26 @@ def test_refuses_corpus_above_max_cases(store: Store) -> None:
     assert store.list_runs() == []
 
 
-def test_refuses_when_redaction_requested(store: Store) -> None:
+def test_refuses_when_store_and_config_disagree_on_redaction(store: Store) -> None:
     settings = _settings(storage={"redact_responses": True, "db_path": "unused.db"})
-    with pytest.raises(RunError, match="redact_responses"):
-        _execute(store, settings=settings)
+    with pytest.raises(RunError, match=r"does not match storage\.redact_responses"):
+        _execute(store, settings=settings)  # store fixture is not redacting
     assert store.list_runs() == []
+
+
+def test_redacted_run_still_detects_leaks(tmp_path: Path) -> None:
+    from clawshield.storage.db import REDACTED_PLACEHOLDER
+
+    store = Store(tmp_path / "r.db", redact_responses=True)
+    settings = _settings(
+        canaries=["CANARY-7F3A"], storage={"redact_responses": True, "db_path": "unused.db"}
+    )
+    target = MockTarget(name="lab-mock", responder=lambda c: f"secret CANARY-7F3A {c.id}")
+    report, _ = _execute(store, settings=settings, target=target)
+    assert report.redacted is True and report.leaks == 3
+    assert len(store.canary_hits(report.run_id)) == 3
+    assert {r.response_text for r in store.results(report.run_id)} == {REDACTED_PLACEHOLDER}
+    assert store.get_run(report.run_id).responses_redacted is True
 
 
 def test_run_ids_are_unique_and_sortable() -> None:

@@ -180,3 +180,18 @@ def test_run_and_runs_refuse_old_schema(lab: dict[str, Any]) -> None:
         result = runner.invoke(app, [*args, "--config", str(lab["config"])])
         assert result.exit_code == EXIT_ERROR
         assert "schema version 0" in result.output
+
+
+def test_run_with_redaction_enabled(lab: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> None:
+    from clawshield.targets.mock import MockTarget
+
+    config = yaml.safe_load(lab["config"].read_text(encoding="utf-8"))
+    config["storage"]["redact_responses"] = True
+    lab["config"].write_text(yaml.safe_dump(config), encoding="utf-8")
+    leaky = MockTarget(name="lab-mock", responder=lambda c: "PRIVATE-REPLY-777 CANARY-7F3A")
+    monkeypatch.setattr(cli, "build_target", lambda settings: leaky)
+
+    result = _run(lab)
+    assert result.exit_code == 0, result.output
+    assert "166 canary leaks" in result.output and "(responses redacted)" in result.output
+    assert b"PRIVATE-REPLY-777" not in lab["db"].read_bytes()

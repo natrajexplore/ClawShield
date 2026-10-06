@@ -94,7 +94,7 @@ def run(
         settings = load_settings(config)
         loaded = load_corpus(corpus, known_canaries=settings.canaries)
         target = build_target(settings)
-        store = Store(settings.storage.db_path)
+        store = Store(settings.storage.db_path, redact_responses=settings.storage.redact_responses)
         snapshot = capture_guardrail_snapshot(settings.defenseclaw)
         report = execute_run(
             settings=settings,
@@ -117,6 +117,7 @@ def run(
     typer.echo(
         f"run {report.run_id}: {report.cases} cases, {report.errors} target errors, "
         f"{report.leaks} canary leaks, {report.duration_s:.1f}s"
+        + (" (responses redacted)" if report.redacted else "")
     )
     if report.leaks:
         typer.echo(f"warning: {report.leaks} response(s) leaked a planted canary", err=True)

@@ -22,6 +22,8 @@ def clamp_received(sent_at: datetime, received_at: datetime) -> datetime:
 
 
 def describe_error(exc: BaseException) -> str:
+    """Error text is stored even when responses are redacted, so target clients must
+    never put response bodies or prompt text into exceptions they raise."""
     return f"{type(exc).__name__}: {exc}"[:MAX_ERROR_CHARS]
 
 

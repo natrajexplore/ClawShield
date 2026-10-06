@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status %}
+{% block title %}Gate {{ rs.run.id }}{% endblock %}
+{% block content %}
+<h1>Promotion gate: {{ status(report.overall) }}</h1>
+<p class="sub">Run <a href="/runs/{{ rs.run.id|urlencode }}"><code>{{ rs.run.id }}</code></a> &middot;
+  evaluated on {{ report.evaluate_on.replace("_", " ") }}</p>
+<table>
+  <thead><tr><th>Status</th><th>Criterion</th><th>Threshold</th><th>Observed</th><th>Detail</th></tr></thead>
+  <tbody>
+  {% for c in report.criteria %}
+    <tr><td>{{ status(c.status) }}</td><td>{{ c.name }}</td><td>{{ c.threshold }}</td>
+      <td>{{ c.observed }}</td><td>{{ c.detail }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<h2>Proposed change</h2>
+{% if report.proposed_command %}
+  <p>Review, then run it yourself. ClawShield never executes it.</p>
+  <pre><code>{{ report.proposed_command }}</code></pre>
+{% else %}
+  <p class="empty">None. Every criterion must PASS before a <code>--mode action</code> command is proposed.</p>
+{% endif %}
+<p class="muted">Export the evidence pack: <code>clawshield gate --run {{ rs.run.id }} --export reports/</code></p>
+{% endblock %}

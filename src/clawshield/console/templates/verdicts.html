@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Verdicts{% endblock %}
+{% block content %}
+<h1>Recent verdicts</h1>
+{% if not verdicts %}
+  <p class="empty">No DefenseClaw verdicts ingested yet.</p>
+{% else %}
+<table>
+  <thead><tr><th>Time (UTC)</th><th>Connector</th><th>Direction</th><th>Severity</th><th>Rule</th><th>Action</th><th>Session</th></tr></thead>
+  <tbody>
+  {% for v in verdicts %}
+    <tr><td>{{ v.ts.strftime("%Y-%m-%d %H:%M:%S") }}</td><td>{{ v.connector }}</td><td>{{ v.direction }}</td>
+      <td><span class="sev {{ v.severity.value }}">{{ v.severity.value }}</span></td>
+      <td>{{ v.rule_id or "" }}</td><td>{{ v.action }}</td><td><code>{{ (v.session_id or "")|truncate(28) }}</code></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

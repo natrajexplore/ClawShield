@@ -111,9 +111,14 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 **Done when:** gate FAILs on the untuned baseline and the report explains exactly why.
 
 ## M6 — Console
-- [ ] FastAPI app on `127.0.0.1:8088`; pages: Runs, Run detail, Verdicts, Recommendations, Gate.
-- [ ] Charts: per-category detection bars, FPR trend across runs.
-- [ ] Use the frontend-design skill for visual direction; keep it HTMX + server templates.
+- [x] FastAPI app on `127.0.0.1:8088`; pages: Runs, Run detail, Verdicts, Recommendations, Gate.
+      `clawshield console`; read-only GET routes, loopback bind (refuses non-loopback without
+      --allow-remote), Host allowlist (DNS rebinding), strict CSP + security headers.
+- [x] Charts: per-category detection bars, FPR trend across runs.
+      Inline SVG with 95% CI whiskers; /trend plots recall and FPR across runs.
+- [x] Use the frontend-design skill for visual direction; keep it HTMX + server templates.
+      Deviation: no HTMX/JS at all. A read-only console needs none, and zero script allows
+      CSP script-src 'none' and removes the CDN/supply-chain dependency.
 
 **Done when:** the full story (baseline → tune → pass gate) is visible without the CLI.
 

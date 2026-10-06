@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError, StatementError
 
 from clawshield.core.models import TargetResult
 from clawshield.storage.db import RunNotFoundError, RunRow, Store
+from tests.conftest import db_bytes
 
 T0 = datetime(2026, 10, 6, 12, 0, 0, tzinfo=UTC)
 
@@ -215,7 +216,7 @@ def test_redacting_store_never_writes_response_text(tmp_path: Path) -> None:
         dump = "\n".join(conn.iterdump())
     assert flags == [("d-001", 1), ("d-002", 0)]  # nothing to redact on an error-only row
     assert "hunter2" not in dump and "SECRET-RESPONSE" not in dump
-    assert b"hunter2" not in path.read_bytes()
+    assert b"hunter2" not in db_bytes(path)
 
 
 def test_default_store_keeps_response_text(store: Store) -> None:
@@ -223,3 +224,16 @@ def test_default_store_keeps_response_text(store: Store) -> None:
     store.add_result("r1", _result(response_text=SECRET_RESPONSE))
     assert store.results("r1")[0].response_text == SECRET_RESPONSE
     assert store.get_run("r1").responses_redacted is False
+
+
+def test_db_uses_wal_and_side_files_stay_secret_free(tmp_path: Path) -> None:
+    import sqlite3
+
+    path = tmp_path / "w.db"
+    store = Store(path, redact_responses=True)
+    store.create_run(_run())
+    store.add_result("r1", _result(response_text=SECRET_RESPONSE))
+    with sqlite3.connect(path) as conn:
+        assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    assert path.with_name("w.db-wal").exists()  # recent writes live here until checkpoint
+    assert b"hunter2" not in db_bytes(path)

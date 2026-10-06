@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pct, ci, bars %}
+{% block title %}Run {{ rs.run.id }}{% endblock %}
+{% block content %}
+{% set o = card.overall %}
+<h1>Run <code>{{ rs.run.id }}</code></h1>
+<p class="sub">
+  <a href="/runs/{{ rs.run.id|urlencode }}/gate">Gate</a> &middot;
+  <a href="/runs/{{ rs.run.id|urlencode }}/recommendations">Recommendations</a> &middot;
+  <a href="/api/runs/{{ rs.run.id|urlencode }}/score">JSON</a>
+</p>
+
+{% if rs.verdicts_in_window == 0 %}<p class="warn">No DefenseClaw verdicts in this run's window: every malicious case scores as a miss. Ingest verdicts first.</p>{% endif %}
+{% if not rs.snapshot_available %}<p class="warn">No guardrail snapshot: this run is not valid gate evidence.</p>{% endif %}
+{% if rs.overlapping_runs %}<p class="warn">Overlaps run(s) {{ rs.overlapping_runs|join(", ") }}: verdicts may be cross-attributed.</p>{% endif %}
+{% if card.excluded_ambiguous %}<p class="warn">{{ card.excluded_ambiguous|length }} ambiguous case(s) excluded (ADR 0003).</p>{% endif %}
+
+<section class="tiles">
+  <div class="tile"><span class="k">Recall</span><span class="v">{{ pct(o.recall) }}</span><span class="c">{{ ci(o.recall_ci) }}</span></div>
+  <div class="tile"><span class="k">False-positive rate</span><span class="v">{{ pct(o.fpr) }}</span><span class="c">{{ ci(o.fpr_ci) }}</span></div>
+  <div class="tile"><span class="k">Benign block FPR</span><span class="v">{{ pct(o.block_fpr) }}</span></div>
+  <div class="tile"><span class="k">Canary leaks</span><span class="v {{ 'bad-text' if card.leaked_case_ids else '' }}">{{ card.leaked_case_ids|length }}</span></div>
+  <div class="tile"><span class="k">Scored</span><span class="v">{{ card.scored }}/{{ card.cases_total }}</span></div>
+</section>
+
+<p class="sub">TP {{ o.tp }} &middot; FN {{ o.fn }} &middot; FP {{ o.fp }} &middot; TN {{ o.tn }} &middot;
+  corpus sha256 <code>{{ rs.run.corpus_hash[:12] }}</code> &middot; target {{ rs.run.target_name }}</p>
+
+{{ bars(recall_bars, "Detection rate by category (95% CI)", true) }}
+{{ bars(fpr_bars, "False-positive rate on benign categories (95% CI)", false) }}
+
+<h2>Failing cases ({{ failing|length }})</h2>
+{% if not failing %}<p class="empty">None.</p>{% else %}
+<table>
+  <thead><tr><th>Case</th><th>Kind</th><th>Category</th><th>Expected</th><th>Leak</th><th>Text (escaped, truncated)</th></tr></thead>
+  <tbody>
+  {% for f in failing[:300] %}
+    <tr><td><code>{{ f.id }}</code></td><td>{{ f.kind }}</td><td>{{ f.category }}</td>
+      <td>{{ f.severity }}</td><td>{{ "yes" if f.leaked else "" }}</td>
+      <td class="text">{{ f.text }}{% if f.truncated %}&hellip;{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% if failing|length > 300 %}<p class="muted">Showing 300 of {{ failing|length }}.</p>{% endif %}
+{% endif %}
+{% endblock %}

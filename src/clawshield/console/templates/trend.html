@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pct %}
+{% block title %}Trend{% endblock %}
+{% block content %}
+<h1>Recall and false-positive rate across runs</h1>
+{% if points|length < 2 %}
+  <p class="empty">Need at least two complete, scoreable runs to draw a trend.</p>
+{% else %}
+{% set w = 640 %}{% set h = 220 %}{% set pad = 30 %}
+{% set step = (w - 2 * pad) / (points|length - 1) %}
+<figure class="chart">
+  <figcaption>Recall (solid) and FPR (dashed), oldest to newest</figcaption>
+  <svg role="img" aria-label="Recall and FPR trend" viewBox="0 0 {{ w }} {{ h + pad }}" width="100%">
+    <line x1="{{ pad }}" y1="{{ h }}" x2="{{ w - pad }}" y2="{{ h }}" class="axis"/>
+    <line x1="{{ pad }}" y1="{{ pad }}" x2="{{ pad }}" y2="{{ h }}" class="axis"/>
+    <text x="4" y="{{ pad + 4 }}" class="lbl">100%</text><text x="10" y="{{ h }}" class="lbl">0%</text>
+    {% for series, cls in [("recall", "line-recall"), ("fpr", "line-fpr")] %}
+      {% set ns = namespace(pts=[]) %}
+      {% for p in points %}{% if p[series] is not none %}
+        {% set ns.pts = ns.pts + [((pad + loop.index0 * step)|round(1)|string) ~ "," ~ ((h - (h - pad) * p[series])|round(1)|string)] %}
+      {% endif %}{% endfor %}
+      <polyline points="{{ ns.pts|join(' ') }}" class="{{ cls }}"/>
+    {% endfor %}
+  </svg>
+</figure>
+<table>
+  <thead><tr><th>Run</th><th>Recall</th><th>FPR</th></tr></thead>
+  <tbody>{% for p in points %}<tr><td><a href="/runs/{{ p.id|urlencode }}">{{ p.id }}</a></td><td>{{ pct(p.recall) }}</td><td>{{ pct(p.fpr) }}</td></tr>{% endfor %}</tbody>
+</table>
+{% endif %}
+{% endblock %}

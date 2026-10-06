@@ -30,7 +30,7 @@ Read these before writing code:
 
 ## Stack
 - Python 3.11 (DefenseClaw supports `>=3.10,<3.14`), `uv` for env management
-- FastAPI + Jinja2 + HTMX for the console (no SPA framework)
+- FastAPI + Jinja2 server templates for the console; no JavaScript (CSP script-src 'none')
 - SQLite (own DB: `data/clawshield.db`) via SQLModel
 - Typer for the CLI (`clawshield ...`)
 - pytest, ruff, mypy (strict on `src/clawshield/core`)
@@ -71,7 +71,7 @@ uv run clawshield tune --run latest       # noisy-rule recommendations (never ex
 uv run clawshield recommend-config <A> <B> # rule pack / strategy from an A/B pair
 uv run clawshield gate                   # exit 0 only on PASS; FAIL/UNVERIFIED exit 3
 uv run clawshield gate --export reports/ # evidence pack (.json + .md) for CAB review
-uv run uvicorn clawshield.console.app:app --reload --port 8088
+uv run clawshield console                # http://127.0.0.1:8088, read-only
 ```
 
 ## Conventions

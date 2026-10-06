@@ -1,0 +1,27 @@
+{% macro pct(v) -%}{% if v is none %}n/a{% else %}{{ "%.1f"|format(v * 100) }}%{% endif %}{%- endmacro %}
+
+{% macro ci(c) -%}{% if c %}[{{ "%.0f"|format(c.low * 100) }}-{{ "%.0f"|format(c.high * 100) }}%]{% endif %}{%- endmacro %}
+
+{% macro status(s) -%}<span class="badge {{ s|lower }}">{{ s }}</span>{%- endmacro %}
+
+{# Horizontal bars with 95% CI whiskers. Pure SVG: no script. #}
+{% macro bars(items, title, good_high) -%}
+{% set w = 560 %}{% set left = 150 %}{% set h = 22 %}
+<figure class="chart">
+  <figcaption>{{ title }}</figcaption>
+  <svg role="img" aria-label="{{ title }}" viewBox="0 0 {{ w + 60 }} {{ items|length * h + 24 }}" width="100%">
+    {% for b in items %}
+      {% set y = loop.index0 * h + 4 %}
+      <text x="{{ left - 8 }}" y="{{ y + 14 }}" text-anchor="end" class="lbl">{{ b.label }} (n={{ b.n }})</text>
+      <rect x="{{ left }}" y="{{ y + 3 }}" width="{{ w - left }}" height="14" class="track"/>
+      {% if b.value is not none %}
+        <rect x="{{ left }}" y="{{ y + 3 }}" width="{{ (w - left) * b.value }}" height="14"
+              class="{{ 'good' if (b.value >= recall_target if good_high else b.value <= fpr_target) else 'bad' }}"/>
+        <line x1="{{ left + (w - left) * b.low }}" x2="{{ left + (w - left) * b.high }}"
+              y1="{{ y + 10 }}" y2="{{ y + 10 }}" class="ci"/>
+        <text x="{{ w + 6 }}" y="{{ y + 14 }}" class="val">{{ pct(b.value) }}</text>
+      {% endif %}
+    {% endfor %}
+  </svg>
+</figure>
+{%- endmacro %}

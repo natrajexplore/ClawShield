@@ -130,9 +130,14 @@ class StoreSchemaError(Exception):
     """The database was created by a different ClawShield schema version."""
 
 
-def _enable_foreign_keys(dbapi_connection: Any, _record: Any) -> None:
+def _configure_connection(dbapi_connection: Any, _record: Any) -> None:
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA foreign_keys=ON")
+    # WAL + NORMAL: every committed result survives an application crash or Ctrl+C (the
+    # runner commits per case); only a power loss can drop the last commits. ~16x faster
+    # than the default on Windows. SQLite gives -wal/-shm the database file's permissions.
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
     cursor.close()
 
 
@@ -151,7 +156,7 @@ class Store:
         db_path.parent.mkdir(parents=True, exist_ok=True)
         _restrict_permissions(db_path)
         self.engine: Engine = create_engine(URL.create("sqlite", database=str(db_path)))
-        event.listen(self.engine, "connect", _enable_foreign_keys)
+        event.listen(self.engine, "connect", _configure_connection)
         self._init_schema(db_path)
 
     def _init_schema(self, db_path: Path) -> None:
@@ -217,6 +222,13 @@ class Store:
             conn.execute(stmt, rows)
             after = conn.execute(select(func.count()).select_from(VerdictRow)).scalar_one()
         return IngestReport(received=len(verdicts), new=after - before)
+
+    def recent_verdicts(self, limit: int = 100) -> list[Verdict]:
+        """Most recent verdicts first (console feed)."""
+        with Session(self.engine) as session:
+            stmt = select(VerdictRow).order_by(col(VerdictRow.ts).desc()).limit(limit)
+            rows = session.exec(stmt).all()
+        return [Verdict.model_validate(row.model_dump(exclude={"ingested_at"})) for row in rows]
 
     def verdicts_between(self, start: datetime, end: datetime) -> list[Verdict]:
         """Verdicts with start <= ts <= end, oldest first (correlation time window)."""

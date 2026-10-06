@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 from clawshield import __version__, cli
 from clawshield.cli import EXIT_ERROR, EXIT_NOT_IMPLEMENTED, app, printable
 from clawshield.storage.db import Store
+from tests.conftest import db_bytes
 
 runner = CliRunner()
 
@@ -195,7 +196,7 @@ def test_run_with_redaction_enabled(lab: dict[str, Any], monkeypatch: pytest.Mon
     result = _run(lab)
     assert result.exit_code == 0, result.output
     assert f"{SEED_CASES} canary leaks" in result.output and "(responses redacted)" in result.output
-    assert b"PRIVATE-REPLY-777" not in lab["db"].read_bytes()
+    assert b"PRIVATE-REPLY-777" not in db_bytes(lab["db"])
 
 
 # --- score ---------------------------------------------------------------------------------

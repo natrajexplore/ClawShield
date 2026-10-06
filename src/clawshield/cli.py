@@ -570,6 +570,38 @@ def gate(
         raise typer.Exit(code=EXIT_GATE_NOT_PASSED)
 
 
+LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
+
+
+@app.command()
+def console(
+    config: ConfigOption = DEFAULT_CONFIG_PATH,
+    allow_remote: Annotated[
+        bool, typer.Option(help="Allow a non-loopback console.host (not recommended).")
+    ] = False,
+) -> None:
+    """Serve the read-only web console on console.host:console.port (default 127.0.0.1:8088)."""
+    import uvicorn
+
+    from clawshield.console.app import create_app
+
+    try:
+        settings = load_settings(config)
+    except ConfigError as exc:
+        _fail(str(exc))
+    host, port = settings.console.host, settings.console.port
+    if host not in LOOPBACK_HOSTS and not allow_remote:
+        _fail(
+            f"console.host {host!r} is not loopback; the console has no authentication. "
+            "Use --allow-remote only behind your own authenticating proxy."
+        )
+    typer.echo(f"ClawShield console on http://{host}:{port} (read-only; Ctrl+C to stop)")
+    uvicorn.run(
+        create_app(settings), host=host, port=port, proxy_headers=False,
+        server_header=False, date_header=False, log_level="warning",
+    )  # fmt: skip
+
+
 @app.command()
 def ingest(
     promptfoo: Annotated[

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Recommendations {{ rs.run.id }}{% endblock %}
+{% block content %}
+<h1>Recommendations</h1>
+<p class="sub">Run <a href="/runs/{{ rs.run.id|urlencode }}"><code>{{ rs.run.id }}</code></a> &middot;
+  proposals only; review before running anything.</p>
+{% if rs.verdicts_in_window == 0 %}<p class="warn">No verdicts in this run's window: nothing to tune.</p>{% endif %}
+{% if not recs %}<p class="empty">No noisy rules found.</p>{% endif %}
+{% for r in recs %}
+<article class="rec">
+  <h2><span class="badge kind">{{ r.kind }}</span> {{ r.target }} <span class="muted">({{ r.directions|join(", ") }})</span></h2>
+  <p>{{ r.rationale }}</p>
+  <p><strong>Benign evidence:</strong> {{ r.evidence_case_ids|join(", ") }}</p>
+  {% if r.lost_detection_case_ids %}
+    <p class="warn"><strong>Only detection of:</strong> {{ r.lost_detection_case_ids|join(", ") }}</p>
+  {% endif %}
+  <pre><code>{{ r.proposed_change }}</code></pre>
+  <p>Then, in observe mode:</p>
+  <pre><code>{{ r.proposed_command }}</code></pre>
+</article>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>{% block title %}ClawShield{% endblock %} - ClawShield</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <a class="brand" href="/runs">ClawShield</a>
+    <nav>
+      <a href="/runs">Runs</a>
+      <a href="/trend">Trend</a>
+      <a href="/verdicts">Verdicts</a>
+    </nav>
+    <span class="local">local read-only console</span>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>ClawShield {{ version }} &middot; proposes changes, never applies them</footer>
+</body>
+</html>

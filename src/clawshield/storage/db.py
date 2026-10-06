@@ -3,21 +3,27 @@
 - All queries go through the ORM with bound parameters; no SQL is built from strings.
 - Timestamps are stored as UTC and returned timezone-aware (SQLite drops tzinfo).
 - On POSIX the DB file is created owner-only (0600): it holds attack prompts and responses.
+- The schema version is kept in `PRAGMA user_version`; a mismatched DB is refused with a
+  clear message instead of failing mid-run on a missing column.
 """
 
 import os
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-from sqlalchemy import JSON, DateTime, Engine, UniqueConstraint, event, func
+from sqlalchemy import JSON, DateTime, Engine, UniqueConstraint, event, func, inspect
 from sqlalchemy.engine import URL
 from sqlalchemy.types import TypeDecorator
 from sqlmodel import Field, Session, SQLModel, col, create_engine, select
 
+from clawshield.core.canary import CanaryHit, Method
 from clawshield.core.models import TargetResult
+
+SCHEMA_VERSION = 2
 
 
 class UTCDateTime(TypeDecorator[datetime]):
@@ -66,6 +72,8 @@ class ResultRow(SQLModel, table=True):
     response_text: str | None = None
     error: str | None = None
     http_status: int | None = None
+    canary_leaked: bool = False
+    canary_hits: list[dict[str, str]] = Field(default_factory=list, sa_type=JSON)
 
 
 @dataclass(frozen=True)
@@ -73,6 +81,7 @@ class RunListing:
     run: RunRow
     results: int
     errors: int
+    leaks: int
 
     @property
     def complete(self) -> bool:
@@ -81,6 +90,10 @@ class RunListing:
 
 class RunNotFoundError(LookupError):
     pass
+
+
+class StoreSchemaError(Exception):
+    """The database was created by a different ClawShield schema version."""
 
 
 def _enable_foreign_keys(dbapi_connection: Any, _record: Any) -> None:
@@ -104,15 +117,37 @@ class Store:
         _restrict_permissions(db_path)
         self.engine: Engine = create_engine(URL.create("sqlite", database=str(db_path)))
         event.listen(self.engine, "connect", _enable_foreign_keys)
-        SQLModel.metadata.create_all(self.engine)
+        self._init_schema(db_path)
+
+    def _init_schema(self, db_path: Path) -> None:
+        with self.engine.connect() as conn:
+            version = conn.exec_driver_sql("PRAGMA user_version").scalar_one()
+            tables = inspect(conn).get_table_names()
+        if not tables:
+            SQLModel.metadata.create_all(self.engine)
+            with self.engine.begin() as conn:
+                # PRAGMA cannot take bound parameters; the value is an int constant.
+                conn.exec_driver_sql(f"PRAGMA user_version = {int(SCHEMA_VERSION)}")
+        elif version != SCHEMA_VERSION:
+            raise StoreSchemaError(
+                f"{db_path} has schema version {version}, this ClawShield needs "
+                f"{SCHEMA_VERSION}; move the old database aside to start a new one"
+            )
 
     def create_run(self, run: RunRow) -> None:
         with Session(self.engine) as session:
             session.add(run)
             session.commit()
 
-    def add_result(self, run_id: str, result: TargetResult) -> None:
-        row = ResultRow(run_id=run_id, **result.model_dump())
+    def add_result(
+        self, run_id: str, result: TargetResult, canary_hits: Sequence[CanaryHit] = ()
+    ) -> None:
+        row = ResultRow(
+            run_id=run_id,
+            canary_leaked=bool(canary_hits),
+            canary_hits=[{"canary": h.canary, "method": h.method} for h in canary_hits],
+            **result.model_dump(),
+        )
         with Session(self.engine) as session:
             session.add(row)
             session.commit()
@@ -143,8 +178,25 @@ class Store:
             stmt = select(ResultRow).where(ResultRow.run_id == run_id).order_by(col(ResultRow.id))
             rows = session.exec(stmt).all()
         return [
-            TargetResult.model_validate(row.model_dump(exclude={"id", "run_id"})) for row in rows
+            TargetResult.model_validate(
+                row.model_dump(exclude={"id", "run_id", "canary_leaked", "canary_hits"})
+            )
+            for row in rows
         ]
+
+    def canary_hits(self, run_id: str) -> dict[str, list[CanaryHit]]:
+        """Leaked canaries per case id (cases without a leak are omitted)."""
+        with Session(self.engine) as session:
+            stmt = select(ResultRow).where(
+                ResultRow.run_id == run_id, col(ResultRow.canary_leaked).is_(True)
+            )
+            rows = session.exec(stmt).all()
+        return {
+            row.case_id: [
+                CanaryHit(h["canary"], cast(Method, h["method"])) for h in row.canary_hits
+            ]
+            for row in rows
+        }
 
     def list_runs(self, limit: int = 20) -> list[RunListing]:
         with Session(self.engine) as session:
@@ -161,5 +213,10 @@ class Store:
                     .select_from(ResultRow)
                     .where(ResultRow.run_id == run.id, col(ResultRow.error).is_not(None))
                 ).one()
-                listings.append(RunListing(run=run, results=total, errors=errors))
+                leaks = session.exec(
+                    select(func.count())
+                    .select_from(ResultRow)
+                    .where(ResultRow.run_id == run.id, col(ResultRow.canary_leaked).is_(True))
+                ).one()
+                listings.append(RunListing(run=run, results=total, errors=errors, leaks=leaks))
         return listings

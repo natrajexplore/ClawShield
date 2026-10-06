@@ -15,7 +15,7 @@ from clawshield.config import DEFAULT_CONFIG_PATH, ConfigError, load_settings
 from clawshield.redteam.corpus import CorpusError, load_corpus
 from clawshield.redteam.runner import RunError, execute_run
 from clawshield.sources.snapshot import capture_guardrail_snapshot
-from clawshield.storage.db import Store
+from clawshield.storage.db import Store, StoreSchemaError
 from clawshield.targets.base import TargetError, build_target
 
 EXIT_ERROR = 1
@@ -104,7 +104,7 @@ def run(
             snapshot=snapshot,
             notes=notes,
         )
-    except (ConfigError, CorpusError, TargetError, RunError) as exc:
+    except (ConfigError, CorpusError, TargetError, RunError, StoreSchemaError) as exc:
         _fail(str(exc))
 
     if not snapshot["available"]:
@@ -116,8 +116,10 @@ def run(
             typer.echo(f"  {printable(error)}", err=True)
     typer.echo(
         f"run {report.run_id}: {report.cases} cases, {report.errors} target errors, "
-        f"{report.duration_s:.1f}s"
+        f"{report.leaks} canary leaks, {report.duration_s:.1f}s"
     )
+    if report.leaks:
+        typer.echo(f"warning: {report.leaks} response(s) leaked a planted canary", err=True)
 
 
 @app.command()
@@ -133,11 +135,17 @@ def runs(
     if not settings.storage.db_path.exists():
         typer.echo("no runs yet")
         return
-    listings = Store(settings.storage.db_path).list_runs(limit)
+    try:
+        listings = Store(settings.storage.db_path).list_runs(limit)
+    except StoreSchemaError as exc:
+        _fail(str(exc))
     if not listings:
         typer.echo("no runs yet")
         return
-    typer.echo(f"{'RUN':<24} {'STARTED (UTC)':<20} {'TARGET':<20} {'CASES':>7} {'ERR':>5}  STATUS")
+    typer.echo(
+        f"{'RUN':<24} {'STARTED (UTC)':<20} {'TARGET':<20} "
+        f"{'CASES':>7} {'ERR':>5} {'LEAK':>5}  STATUS"
+    )
     for item in listings:
         r = item.run
         status = "complete" if item.complete else "INCOMPLETE"
@@ -145,7 +153,7 @@ def runs(
         typer.echo(
             f"{r.id:<24} {r.started_at:%Y-%m-%d %H:%M:%S}  "
             f"{printable(r.target_name)[:20]:<20} {item.results:>3}/{r.case_count:<3} "
-            f"{item.errors:>5}  {status}{snap}"
+            f"{item.errors:>5} {item.leaks:>5}  {status}{snap}"
         )
 
 

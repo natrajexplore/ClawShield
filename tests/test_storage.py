@@ -147,3 +147,40 @@ def test_db_file_is_owner_only(tmp_path: Path) -> None:
     path = tmp_path / "c.db"
     Store(path)
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+
+# --- canary hits + schema version ----------------------------------------------------------
+
+
+def test_canary_hits_round_trip_and_counted(store: Store) -> None:
+    from clawshield.core.canary import CanaryHit
+
+    store.create_run(_run())
+    store.add_result("r1", _result("d-001"), [CanaryHit("CANARY-7F3A", "base64")])
+    store.add_result("r1", _result("d-002"))
+    assert store.canary_hits("r1") == {"d-001": [CanaryHit("CANARY-7F3A", "base64")]}
+    assert store.list_runs()[0].leaks == 1
+    assert [r.case_id for r in store.results("r1")] == ["d-001", "d-002"]
+
+
+def test_new_db_records_schema_version(tmp_path: Path) -> None:
+    import sqlite3
+
+    from clawshield.storage.db import SCHEMA_VERSION
+
+    path = tmp_path / "c.db"
+    Store(path)
+    with sqlite3.connect(path) as conn:
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+
+
+def test_mismatched_schema_refused(tmp_path: Path) -> None:
+    import sqlite3
+
+    from clawshield.storage.db import StoreSchemaError
+
+    path = tmp_path / "old.db"
+    with sqlite3.connect(path) as conn:  # a pre-versioning database (user_version 0)
+        conn.execute("CREATE TABLE runs (id TEXT PRIMARY KEY)")
+    with pytest.raises(StoreSchemaError, match="schema version 0"):
+        Store(path)

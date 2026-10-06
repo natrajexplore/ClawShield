@@ -40,7 +40,9 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 - [x] `clawshield run` stores `Run` + `TargetResult` rows; captures guardrail snapshot.
       Snapshot parsing is unverified against real DefenseClaw output until M0 fixtures exist;
       runs without a snapshot are flagged "(no snapshot)" and must not be used as gate evidence.
-- [ ] Canary detection (FR-6).
+- [x] Canary detection (FR-6). Every response is checked against every configured canary:
+      exact, normalized (case/NFKC/zero-width/homoglyph/separators), tag chars, reversed,
+      ROT13, base64, hex. Hits stored per result; LEAK column in `clawshield runs`.
 
 **Done when:** a full run against the lab completes and is listed by `clawshield runs`.
 

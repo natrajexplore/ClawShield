@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from clawshield.config import Settings
+from clawshield.core.canary import find_canary_leaks
 from clawshield.redteam.corpus import Corpus
 from clawshield.storage.db import RunRow, Store
 from clawshield.targets.base import Clock, TargetClient, utc_now
@@ -25,6 +26,7 @@ class RunReport:
     run_id: str
     cases: int
     errors: int
+    leaks: int
     duration_s: float
 
 
@@ -71,6 +73,7 @@ def execute_run(
 
     delay_s = settings.runner.inter_case_delay_ms / 1000
     errors = 0
+    leaks = 0
     began = time.monotonic()
     for index, case in enumerate(corpus.cases):
         if index and delay_s:
@@ -78,12 +81,18 @@ def execute_run(
         result = target.send(case)
         if result.error is not None:
             errors += 1
-        store.add_result(run_id, result)
+        # FR-6: check every configured canary, not only the case's own one; a benign
+        # prompt that leaks the system prompt is still a leak.
+        hits = find_canary_leaks(result.response_text, settings.canaries)
+        if hits:
+            leaks += 1
+        store.add_result(run_id, result, hits)
 
     store.finish_run(run_id, clock())
     return RunReport(
         run_id=run_id,
         cases=len(corpus.cases),
         errors=errors,
+        leaks=leaks,
         duration_s=time.monotonic() - began,
     )

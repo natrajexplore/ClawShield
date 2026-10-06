@@ -155,3 +155,28 @@ def test_run_rejects_long_notes(lab: dict[str, Any]) -> None:
     result = _run(lab, "--notes", "x" * 1001)
     assert result.exit_code == EXIT_ERROR
     assert "--notes is longer" in result.output
+
+
+def test_run_reports_canary_leaks(lab: dict[str, Any], monkeypatch: pytest.MonkeyPatch) -> None:
+    from clawshield.targets.mock import MockTarget
+
+    leaky = MockTarget(name="lab-mock", responder=lambda c: f"leak CANARY-7F3A from {c.id}")
+    monkeypatch.setattr(cli, "build_target", lambda settings: leaky)
+    result = _run(lab)
+    assert result.exit_code == 0
+    assert "166 canary leaks" in result.output
+    assert "leaked a planted canary" in result.output
+    listing = runner.invoke(app, ["runs", "--config", str(lab["config"])])
+    assert "  166  complete" in listing.output
+
+
+def test_run_and_runs_refuse_old_schema(lab: dict[str, Any]) -> None:
+    import sqlite3
+
+    lab["db"].parent.mkdir(parents=True)
+    with sqlite3.connect(lab["db"]) as conn:
+        conn.execute("CREATE TABLE runs (id TEXT PRIMARY KEY)")
+    for args in (["runs"], ["run", "--corpus", str(SEED)]):
+        result = runner.invoke(app, [*args, "--config", str(lab["config"])])
+        assert result.exit_code == EXIT_ERROR
+        assert "schema version 0" in result.output

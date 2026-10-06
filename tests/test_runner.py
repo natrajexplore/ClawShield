@@ -128,3 +128,30 @@ def test_run_ids_are_unique_and_sortable() -> None:
     assert all(i.startswith("20261006T120000Z-") for i in ids)
     later = new_run_id(lambda: T0 + timedelta(seconds=1))
     assert later > max(ids)
+
+
+def test_canary_leaks_detected_for_every_case_and_stored(store: Store) -> None:
+    import base64
+
+    def responder(case: Case) -> str:
+        if case.id == "d-000":
+            return "Sure: CANARY-7F3A"
+        if case.id == "d-002":
+            return base64.b64encode(b"rules... CANARY-7F3A ...").decode()
+        return "I can't help with that."
+
+    settings = _settings(canaries=["CANARY-7F3A"])
+    target = MockTarget(name="lab-mock", responder=responder)
+    report, _ = _execute(store, settings=settings, target=target)
+    assert report.leaks == 2
+    hits = store.canary_hits(report.run_id)
+    assert {k: [h.method for h in v] for k, v in hits.items()} == {
+        "d-000": ["exact"],
+        "d-002": ["base64"],
+    }
+
+
+def test_no_canaries_configured_means_no_leaks(store: Store) -> None:
+    target = MockTarget(name="lab-mock", responder=lambda c: "CANARY-7F3A")
+    report, _ = _execute(store, target=target)
+    assert report.leaks == 0

@@ -13,8 +13,8 @@ runner = CliRunner()
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SEED = REPO_ROOT / "redteam" / "corpus" / "seed.jsonl"
-STUB_COMMANDS = ["doctor", "score", "gate", "ingest"]
-ALL_COMMANDS = [*STUB_COMMANDS, "run", "runs"]
+STUB_COMMANDS = ["doctor", "gate", "ingest"]
+ALL_COMMANDS = [*STUB_COMMANDS, "run", "runs", "score"]
 
 
 def test_help_lists_all_commands() -> None:
@@ -39,7 +39,6 @@ def test_stubs_fail_closed(command: str) -> None:
 
 def test_documented_options_parse() -> None:
     # Options shown in CLAUDE.md must be accepted (stubs still fail closed).
-    assert runner.invoke(app, ["score", "--run", "latest"]).exit_code == EXIT_NOT_IMPLEMENTED
     assert runner.invoke(app, ["ingest", "--promptfoo", "r.json"]).exit_code == EXIT_NOT_IMPLEMENTED
 
 
@@ -195,3 +194,83 @@ def test_run_with_redaction_enabled(lab: dict[str, Any], monkeypatch: pytest.Mon
     assert result.exit_code == 0, result.output
     assert "166 canary leaks" in result.output and "(responses redacted)" in result.output
     assert b"PRIVATE-REPLY-777" not in lab["db"].read_bytes()
+
+
+# --- score ---------------------------------------------------------------------------------
+
+
+def test_score_latest_after_run(lab: dict[str, Any]) -> None:
+    _run(lab)
+    result = runner.invoke(app, ["score", "--run", "latest", "--config", str(lab["config"])])
+    assert result.exit_code == 0, result.output
+    assert "cases 166 | scored 166" in result.output
+    assert "no DefenseClaw verdicts in this run's window" in result.output
+    for section in ("OVERALL", "CATEGORY", "EXPECTED SEVERITY"):
+        assert section in result.output
+
+
+def test_score_json(lab: dict[str, Any]) -> None:
+    import json
+
+    _run(lab)
+    result = runner.invoke(app, ["score", "--json", "--config", str(lab["config"])])
+    assert result.exit_code == 0
+    data = json.loads(result.stdout)
+    assert data["cases_total"] == 166 and data["verdicts_in_window"] == 0
+    assert data["run"]["snapshot_available"] is True
+
+
+def test_score_escapes_hostile_rule_ids(lab: dict[str, Any]) -> None:
+    from datetime import UTC, datetime
+
+    from clawshield.core.models import Severity, Verdict
+
+    _run(lab)
+    store = Store(lab["db"])
+    first = store.results(store.get_run("latest").id)[0]
+    store.add_verdicts(
+        [Verdict(id="v", source="test", ts=first.sent_at, connector="openclaw",
+                 direction="prompt", severity=Severity.HIGH, rule_id="evil" + chr(27) + "[2Jrule",
+                 action="observe", session_id=first.session_id)],
+        ingested_at=datetime.now(UTC),
+    )  # fmt: skip
+    result = runner.invoke(app, ["score", "--config", str(lab["config"])])
+    escaped = "evil" + chr(92) + "x1b[2Jrule"
+    assert escaped in result.output and chr(27) not in result.output
+
+
+def test_score_errors(lab: dict[str, Any]) -> None:
+    no_db = runner.invoke(app, ["score", "--config", str(lab["config"])])
+    assert no_db.exit_code == EXIT_ERROR and "no runs yet" in no_db.output
+    _run(lab)
+    missing = runner.invoke(app, ["score", "--run", "nope", "--config", str(lab["config"])])
+    assert missing.exit_code == EXIT_ERROR and "not found" in missing.output
+    bad_cfg = runner.invoke(app, ["score", "--config", "missing.yaml"])
+    assert bad_cfg.exit_code == EXIT_ERROR
+
+
+def test_score_reports_ambiguous_cases(lab: dict[str, Any]) -> None:
+    from datetime import UTC, datetime
+
+    from clawshield.core.models import Severity, Verdict
+
+    _run(lab)  # inter_case_delay_ms=0, so every case window overlaps its neighbours
+    store = Store(lab["db"])
+    first = store.results(store.get_run("latest").id)[0]
+    store.add_verdicts(
+        [Verdict(id="v", source="test", ts=first.received_at, connector="openclaw",
+                 direction="prompt", severity=Severity.HIGH, action="observe")],
+        ingested_at=datetime.now(UTC),
+    )  # fmt: skip
+    result = runner.invoke(app, ["score", "--config", str(lab["config"])])
+    assert result.exit_code == 0
+    assert "ambiguous case(s) excluded" in result.output
+    assert "inter_case_delay_ms" in result.output
+
+
+def test_score_warns_when_run_has_no_snapshot(lab: dict[str, Any]) -> None:
+    lab["snapshot"].update(available=False, errors=["status --json: not found"])
+    _run(lab)
+    result = runner.invoke(app, ["score", "--config", str(lab["config"])])
+    assert result.exit_code == 0
+    assert "not valid as gate evidence" in result.output

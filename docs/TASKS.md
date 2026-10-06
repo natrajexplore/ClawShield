@@ -67,7 +67,9 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       ambiguous and errored cases excluded and counted; hand-verified 9-case fixture.
 - [x] Slices: direction, category, severity, rule.
       Category/severity filter cases; direction/rule re-score using only those verdicts.
-- [ ] `clawshield score --run <id>` prints a table; `--json` for machines.
+- [x] `clawshield score --run <id>` prints a table; `--json` for machines.
+      Refuses incomplete runs and corpora whose hash changed since the run (edited labels);
+      warns on 0 verdicts in window, missing snapshot, and ambiguous exclusions.
 - [ ] A/B compare (FR-12): `clawshield compare <runA> <runB>`.
 
 **Done when:** scoring 1,000 synthetic outcomes < 5 s (NFR-6) and numbers hand-verified on a small fixture.

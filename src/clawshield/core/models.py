@@ -1,7 +1,10 @@
 """Core domain models. Pure: no I/O."""
 
+import hashlib
+import json
+from collections.abc import Mapping
 from enum import StrEnum
-from typing import Annotated, Literal, Self
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
@@ -102,3 +105,39 @@ class TargetResult(BaseModel):
     @property
     def latency_s(self) -> float:
         return (self.received_at - self.sent_at).total_seconds()
+
+
+Direction = Literal["prompt", "completion", "tool_call", "unknown"]
+VerdictAction = Literal["block", "alert", "confirm", "allow", "observe"]
+
+
+class Verdict(BaseModel):
+    """One normalized DefenseClaw guardrail decision (FR-8).
+
+    `direction` is "unknown" when the source does not say; parsers must not guess.
+    `raw` is the source record as received (None when the store redacts).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    id: Annotated[str, Field(min_length=1, max_length=200)]
+    source: Annotated[str, Field(pattern=r"^[a-z][a-z0-9_]{0,31}$")]
+    ts: AwareDatetime
+    connector: str
+    direction: Direction
+    severity: Severity
+    rule_id: str | None = None
+    action: VerdictAction
+    session_id: str | None = None
+    raw: dict[str, Any] | None = None
+
+
+def stable_verdict_id(source: str, raw: Mapping[str, Any], native_id: str | None = None) -> str:
+    """Idempotency key (NFR-3): the source's own id when it has one, else a content hash.
+
+    The hash is over canonical JSON, so key order and whitespace do not change it.
+    """
+    if native_id:
+        return f"{source}:{native_id}"
+    canonical = json.dumps(raw, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return f"{source}:sha256:{hashlib.sha256(canonical.encode('ascii')).hexdigest()}"

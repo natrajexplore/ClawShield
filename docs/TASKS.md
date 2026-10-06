@@ -49,7 +49,10 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 ## M3 — Collector + correlation
 - [ ] `DefenseClawCliSource` parses `alerts --json` into `Verdict` (fixture-tested).
 - [ ] Optional `JsonlSource` behind the same interface.
-- [ ] Idempotent ingest (NFR-3) using a stable verdict hash.
+- [x] Idempotent ingest (NFR-3) using a stable verdict hash.
+      `Verdict` model (FR-8, direction may be `unknown`), `stable_verdict_id` (source id,
+      else canonical-JSON SHA-256), `VerdictSource` protocol, `Store.add_verdicts` with
+      ON CONFLICT DO NOTHING; raw payload dropped when redacting.
 - [ ] Correlation per ARCHITECTURE.md; ADR 0003; report correlation coverage.
 
 **Done when:** ≥ 90% of cases in a lab run correlate by session or time window.

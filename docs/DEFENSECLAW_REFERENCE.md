@@ -82,6 +82,15 @@ defenseclaw setup guardrail --non-interactive --connector openclaw \
       structured keys `defenseclaw.finding.rule_id`, `defenseclaw.finding.title`,
       `defenseclaw.scan.scanner`, `defenseclaw.guardrail.evidence_summary`; hook details carry
       `key=value` pairs incl. `action`, `raw_action`, `would_block`, `connector`. Confirm with lab fixtures.
+      From `_alerts_json` (source read 2026-10-06, still unverified against real output):
+      a JSON **list**, newest first, of rows with `id`, `timestamp` (ISO or `""`), `severity`
+      (uppercase, e.g. `CRITICAL`), `action` (an **event type** such as `scan-finding`,
+      `quarantine`, `telemetry-destination`, `circuit_breaker_open` - not block/alert),
+      `target`, `actor`, `connector`, `details` (key=value string); optional `decision`,
+      `route`, `rule` (`"<rule_id>: <title>"`), `scanner`, `location`, `sandbox`, `path`,
+      `moved_to`. Implications: use `id` as the idempotency key; filter out non-guardrail
+      event types; direction is not a field (look in `details`); `--limit` returns only the
+      newest N, so ingest must request enough to cover the whole run window.
 - [x] Whether `openclaw` connector is hook- or proxy-based in our pinned version.
       **Proxy** ("the reference proxy connector"), per `docs/connectors/openclaw` (checked 2026-10-06).
       Default proxy port 4000 (`--port`). Re-confirm against the pinned version in M0.

@@ -18,14 +18,15 @@ from pathlib import Path
 from typing import Any, cast
 
 from sqlalchemy import JSON, DateTime, Engine, UniqueConstraint, event, func, inspect
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.engine import URL
 from sqlalchemy.types import TypeDecorator
 from sqlmodel import Field, Session, SQLModel, col, create_engine, select
 
 from clawshield.core.canary import CanaryHit, Method
-from clawshield.core.models import TargetResult
+from clawshield.core.models import TargetResult, Verdict
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 REDACTED_PLACEHOLDER = "[redacted]"
 
@@ -80,6 +81,32 @@ class ResultRow(SQLModel, table=True):
     canary_leaked: bool = False
     canary_hits: list[dict[str, str]] = Field(default_factory=list, sa_type=JSON)
     response_redacted: bool = False
+
+
+class VerdictRow(SQLModel, table=True):
+    __tablename__ = "verdicts"
+
+    id: str = Field(primary_key=True)
+    source: str
+    ts: datetime = Field(sa_type=UTCDateTime, index=True)
+    connector: str
+    direction: str
+    severity: str
+    rule_id: str | None = None
+    action: str
+    session_id: str | None = Field(default=None, index=True)
+    raw: dict[str, Any] | None = Field(default=None, sa_type=JSON)
+    ingested_at: datetime = Field(sa_type=UTCDateTime)
+
+
+@dataclass(frozen=True)
+class IngestReport:
+    received: int
+    new: int
+
+    @property
+    def duplicates(self) -> int:
+        return self.received - self.new
 
 
 @dataclass(frozen=True)
@@ -165,6 +192,41 @@ class Store:
         with Session(self.engine) as session:
             session.add(row)
             session.commit()
+
+    def add_verdicts(self, verdicts: Sequence[Verdict], ingested_at: datetime) -> IngestReport:
+        """Idempotent ingest (NFR-3): verdicts whose id is already stored are skipped.
+
+        With redaction on, `raw` is dropped: DefenseClaw evidence fields can quote the
+        prompt or response text.
+        """
+        if not verdicts:
+            return IngestReport(received=0, new=0)
+        rows = []
+        for v in verdicts:
+            row = v.model_dump(mode="python")  # column types convert ts/ingested_at to UTC
+            row["severity"] = v.severity.value
+            row["ingested_at"] = ingested_at
+            if self.redact_responses:
+                row["raw"] = None
+            rows.append(row)
+        table = SQLModel.metadata.tables["verdicts"]
+        stmt = sqlite_insert(table).on_conflict_do_nothing(index_elements=["id"])
+        with self.engine.begin() as conn:
+            before = conn.execute(select(func.count()).select_from(VerdictRow)).scalar_one()
+            conn.execute(stmt, rows)
+            after = conn.execute(select(func.count()).select_from(VerdictRow)).scalar_one()
+        return IngestReport(received=len(verdicts), new=after - before)
+
+    def verdicts_between(self, start: datetime, end: datetime) -> list[Verdict]:
+        """Verdicts with start <= ts <= end, oldest first (correlation time window)."""
+        with Session(self.engine) as session:
+            stmt = (
+                select(VerdictRow)
+                .where(col(VerdictRow.ts) >= start, col(VerdictRow.ts) <= end)
+                .order_by(col(VerdictRow.ts), col(VerdictRow.id))
+            )
+            rows = session.exec(stmt).all()
+        return [Verdict.model_validate(row.model_dump(exclude={"ingested_at"})) for row in rows]
 
     def finish_run(self, run_id: str, finished_at: datetime) -> None:
         with Session(self.engine) as session:

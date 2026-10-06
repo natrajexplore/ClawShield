@@ -1,5 +1,6 @@
 """Deterministic in-process target for tests and CI. Makes no network calls."""
 
+import secrets
 from collections.abc import Callable
 
 from clawshield.core.models import Case, TargetResult
@@ -20,10 +21,14 @@ class MockTarget:
         name: str = "mock",
         responder: Responder = default_responder,
         clock: Clock = utc_now,
+        session_prefix: str | None = None,
     ) -> None:
         self.name = name
         self._responder = responder
         self._clock = clock
+        # Unique per instance (i.e. per run): reusing session ids across runs would let one
+        # run's verdicts correlate to another run's cases.
+        self._session_prefix = session_prefix or f"{name}-{secrets.token_hex(4)}"
 
     def send(self, case: Case) -> TargetResult:
         sent_at = self._clock()
@@ -35,7 +40,7 @@ class MockTarget:
             error = describe_error(exc)
         return TargetResult(
             case_id=case.id,
-            session_id=f"{self.name}-{case.id}",
+            session_id=f"{self._session_prefix}-{case.id}",
             sent_at=sent_at,
             received_at=clamp_received(sent_at, self._clock()),
             response_text=response,

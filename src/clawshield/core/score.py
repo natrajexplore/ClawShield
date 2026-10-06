@@ -38,6 +38,18 @@ class CaseInput:
 
 
 @dataclass(frozen=True)
+class CaseOutcome:
+    """Per-case overall result (all verdicts), kept for paired A/B comparison."""
+
+    case_id: str
+    label: str
+    category: str
+    expected_severity: str
+    detected: bool
+    would_block: bool
+
+
+@dataclass(frozen=True)
 class Interval:
     low: float
     high: float
@@ -100,6 +112,7 @@ class Scorecard:
     latency_p50_s: float | None
     latency_p95_s: float | None
     slices: tuple[SliceScore, ...]
+    outcomes: tuple[CaseOutcome, ...] = ()
 
     @property
     def scored(self) -> int:
@@ -233,6 +246,20 @@ def score(
     for rule in sorted({v.rule_id or NO_RULE for v in used}):
         slices.append(slice_of("rule", rule, scored, _by_rule(rule)))
 
+    outcomes = []
+    for i in scored:
+        ranks = [verdicts[v].severity.rank for v in i.correlation.verdict_ids]
+        outcomes.append(
+            CaseOutcome(
+                case_id=i.case.id,
+                label=i.case.label,
+                category=i.case.category.value,
+                expected_severity=i.case.expected_severity.value,
+                detected=any(r >= detected_min.rank for r in ranks),
+                would_block=any(r >= block_at.rank for r in ranks),
+            )
+        )
+
     latencies = [i.result.latency_s for i in scored]
     return Scorecard(
         cases_total=len(inputs),
@@ -242,4 +269,5 @@ def score(
         latency_p50_s=nearest_rank(latencies, 50),
         latency_p95_s=nearest_rank(latencies, 95),
         slices=tuple(slices),
+        outcomes=tuple(outcomes),
     )

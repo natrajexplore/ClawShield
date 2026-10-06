@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from clawshield.config import Settings
+from clawshield.core.compare import Comparison, PairedTest, compare
 from clawshield.core.correlate import DEFAULT_PRE_S, CorrelationReport, correlate
 from clawshield.core.score import CaseInput, Interval, Scorecard, SliceScore, score
 from clawshield.redteam.corpus import load_corpus
@@ -28,6 +29,7 @@ class RunScore:
     verdicts_in_window: int
     grace_s: float
     pre_s: float
+    overlapping_runs: tuple[str, ...] = ()
 
     @property
     def snapshot_available(self) -> bool:
@@ -60,6 +62,8 @@ def score_run(
     window_start = run.started_at - timedelta(seconds=DEFAULT_PRE_S)
     window_end = run.finished_at + timedelta(seconds=grace_s)
     verdicts = store.verdicts_between(window_start, window_end)
+    # Another run active inside this window can have its verdicts credited to our cases.
+    overlapping = tuple(store.runs_overlapping(window_start, window_end, exclude=run.id))
 
     report = correlate(
         results, verdicts, grace_s=grace_s, pre_s=DEFAULT_PRE_S,
@@ -78,7 +82,7 @@ def score_run(
     )  # fmt: skip
     return RunScore(
         run=run, card=card, correlation=report, verdicts_in_window=len(verdicts),
-        grace_s=grace_s, pre_s=DEFAULT_PRE_S,
+        grace_s=grace_s, pre_s=DEFAULT_PRE_S, overlapping_runs=overlapping,
     )  # fmt: skip
 
 
@@ -123,6 +127,7 @@ def to_dict(rs: RunScore, settings: Settings) -> dict[str, Any]:
         "excluded_errors": list(card.excluded_errors),
         "canary_leaks": list(card.leaked_case_ids),
         "verdicts_in_window": rs.verdicts_in_window,
+        "overlapping_runs": list(rs.overlapping_runs),
         "correlation": {
             "by_method": dict(rs.correlation.by_method),
             "coverage": rs.correlation.coverage,
@@ -133,3 +138,58 @@ def to_dict(rs: RunScore, settings: Settings) -> dict[str, Any]:
         "latency_p95_s": card.latency_p95_s,
         "slices": [slice_to_dict(s) for s in card.slices],
     }
+
+
+@dataclass(frozen=True)
+class RunComparison:
+    a: RunScore
+    b: RunScore
+    comparison: Comparison
+
+
+def compare_runs(
+    store: Store, settings: Settings, run_a: str, run_b: str, corpus_path: Path | None = None
+) -> RunComparison:
+    """A/B compare two runs (FR-12). Both must have used the identical corpus."""
+    a = score_run(store, settings, run_a, corpus_path)
+    b = score_run(store, settings, run_b, corpus_path)
+    if a.run.id == b.run.id:
+        raise ScoringError("A and B are the same run")
+    if a.run.corpus_hash != b.run.corpus_hash:
+        raise ScoringError(
+            f"runs used different corpora ({a.run.corpus_hash[:12]} vs "
+            f"{b.run.corpus_hash[:12]}); a paired comparison needs the same cases"
+        )
+    return RunComparison(a=a, b=b, comparison=compare(a.card, b.card))
+
+
+def comparison_to_dict(rc: RunComparison) -> dict[str, Any]:
+    c = rc.comparison
+
+    def test(t: PairedTest | None) -> dict[str, Any] | None:
+        return None if t is None else {"a_only": t.a_only, "b_only": t.b_only, "p": t.p_value}
+
+    return {
+        "a": {"id": rc.a.run.id, "notes": rc.a.run.notes,
+              "snapshot_available": rc.a.snapshot_available},
+        "b": {"id": rc.b.run.id, "notes": rc.b.run.notes,
+              "snapshot_available": rc.b.snapshot_available},
+        "corpus_hash": rc.a.run.corpus_hash,
+        "method": "exact McNemar (paired), two-sided; per-slice p not corrected",
+        "alpha": c.alpha,
+        "paired_cases": c.paired_cases,
+        "excluded_case_ids": list(c.excluded_case_ids),
+        "latency_p50_delta_s": c.latency_p50_delta_s,
+        "latency_p95_delta_s": c.latency_p95_delta_s,
+        "slices": [
+            {
+                "dimension": s.dimension, "value": s.value,
+                "positives": s.positives, "negatives": s.negatives,
+                "recall_a": s.recall_a, "recall_b": s.recall_b,
+                "recall_test": test(s.recall_test), "recall_verdict": s.recall_verdict,
+                "fpr_a": s.fpr_a, "fpr_b": s.fpr_b,
+                "fpr_test": test(s.fpr_test), "fpr_verdict": s.fpr_verdict,
+            }
+            for s in c.slices
+        ],
+    }  # fmt: skip

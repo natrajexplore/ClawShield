@@ -37,6 +37,8 @@ class TargetClient(Protocol):
 
     Implementations must not raise for target-side failures (timeouts, HTTP errors,
     refusals); they return a TargetResult with `error` set instead.
+    Session ids must be unique per case *and per run*, or correlation would credit one
+    run's verdicts to another run's cases.
     """
 
     name: str

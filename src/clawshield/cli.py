@@ -16,7 +16,15 @@ from clawshield.config import DEFAULT_CONFIG_PATH, ConfigError, load_settings
 from clawshield.core.score import Interval, SliceScore
 from clawshield.redteam.corpus import CorpusError, load_corpus
 from clawshield.redteam.runner import RunError, execute_run
-from clawshield.scoring import RunScore, ScoringError, score_run, to_dict
+from clawshield.scoring import (
+    RunComparison,
+    RunScore,
+    ScoringError,
+    compare_runs,
+    comparison_to_dict,
+    score_run,
+    to_dict,
+)
 from clawshield.sources.snapshot import capture_guardrail_snapshot
 from clawshield.storage.db import RunNotFoundError, Store, StoreSchemaError
 from clawshield.targets.base import TargetError, build_target
@@ -214,6 +222,7 @@ def _print_scorecard(rs: RunScore) -> None:
         )
     if not rs.snapshot_available:
         typer.echo("WARNING: run has no guardrail snapshot; not valid as gate evidence.", err=True)
+    _warn_overlap(rs)
     if card.excluded_ambiguous:
         typer.echo(
             f"NOTE: {len(card.excluded_ambiguous)} ambiguous case(s) excluded; "
@@ -258,6 +267,88 @@ def score(
         typer.echo(json.dumps(to_dict(result, settings), indent=2, sort_keys=True))
     else:
         _print_scorecard(result)
+
+
+def _warn_overlap(rs: RunScore) -> None:
+    if rs.overlapping_runs:
+        typer.echo(
+            f"WARNING: run {rs.run.id} overlaps run(s) {', '.join(rs.overlapping_runs)} "
+            f"within the {rs.grace_s:g}s correlation grace; verdicts may be cross-attributed. "
+            "Leave at least the grace period between runs.",
+            err=True,
+        )
+
+
+def _p(value: float) -> str:
+    return "<0.001" if value < 0.001 else f"{value:.3f}"
+
+
+def _print_comparison(rc: RunComparison) -> None:
+    c = rc.comparison
+    for tag, rs in (("A", rc.a), ("B", rc.b)):
+        snap = "" if rs.snapshot_available else "  (no snapshot)"
+        typer.echo(f"{tag}  {rs.run.id}  notes: {printable(rs.run.notes) or '-'}{snap}")
+    typer.echo(
+        f"paired cases {c.paired_cases} (excluded {len(c.excluded_case_ids)}) | "
+        f"exact McNemar, alpha {c.alpha:g}"
+    )
+    _warn_overlap(rc.a)
+    _warn_overlap(rc.b)
+    typer.echo(
+        "NOTE: per-slice p-values are not corrected for multiple comparisons; decide on OVERALL.",
+        err=True,
+    )
+    typer.echo()
+    typer.echo(
+        f"  {'SLICE':<28} {'N+':>4} {'RECALL A -> B':<16} {'p':>6}  {'VERDICT':<26} "
+        f"{'N-':>4} {'FPR A -> B':<16} {'p':>6}  VERDICT"
+    )
+    for s in c.slices:
+        label = "overall" if s.dimension == "overall" else f"{s.dimension}={s.value}"
+        rp = _p(s.recall_test.p_value) if s.recall_test else "-"
+        fp = _p(s.fpr_test.p_value) if s.fpr_test else "-"
+        recall = f"{_pct(s.recall_a)} -> {_pct(s.recall_b)}"
+        fpr = f"{_pct(s.fpr_a)} -> {_pct(s.fpr_b)}"
+        typer.echo(
+            f"  {printable(label)[:28]:<28} {s.positives:>4} {recall:<16} {rp:>6}  "
+            f"{s.recall_verdict:<26} {s.negatives:>4} {fpr:<16} {fp:>6}  {s.fpr_verdict}"
+        )
+    typer.echo()
+    typer.echo(
+        f"latency delta (B - A): p50 {_signed(c.latency_p50_delta_s)}  "
+        f"p95 {_signed(c.latency_p95_delta_s)}"
+    )
+
+
+def _signed(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:+.3f}s"
+
+
+@app.command()
+def compare(
+    run_a: Annotated[str, typer.Argument(help="Baseline run id (A).")],
+    run_b: Annotated[str, typer.Argument(help="Candidate run id (B), or 'latest'.")],
+    config: ConfigOption = DEFAULT_CONFIG_PATH,
+    corpus: Annotated[
+        Path | None,
+        typer.Option(help="Corpus file if it moved; must match both runs' corpus hash."),
+    ] = None,
+    as_json: Annotated[bool, typer.Option("--json", help="Machine-readable output.")] = False,
+) -> None:
+    """A/B compare two runs on the same corpus with a paired significance test (FR-12)."""
+    try:
+        settings = load_settings(config)
+        if not settings.storage.db_path.exists():
+            _fail("no runs yet; run `clawshield run` first")
+        result = compare_runs(Store(settings.storage.db_path), settings, run_a, run_b, corpus)
+    except RunNotFoundError as exc:
+        _fail(f"run {exc.args[0]!r} not found")
+    except (ConfigError, CorpusError, StoreSchemaError, ScoringError) as exc:
+        _fail(str(exc))
+    if as_json:
+        typer.echo(json.dumps(comparison_to_dict(result), indent=2, sort_keys=True))
+    else:
+        _print_comparison(result)
 
 
 @app.command()

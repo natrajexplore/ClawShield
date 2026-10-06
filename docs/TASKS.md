@@ -70,7 +70,11 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 - [x] `clawshield score --run <id>` prints a table; `--json` for machines.
       Refuses incomplete runs and corpora whose hash changed since the run (edited labels);
       warns on 0 verdicts in window, missing snapshot, and ambiguous exclusions.
-- [ ] A/B compare (FR-12): `clawshield compare <runA> <runB>`.
+- [x] A/B compare (FR-12): `clawshield compare <runA> <runB>`.
+      Paired exact McNemar per slice (overall, category, expected severity) with
+      B better / worse / no significant difference; refuses different corpora; latency delta;
+      warns when runs overlap in time. Mock session ids are now unique per run (found by the
+      end-to-end test: identical ids let one run's verdicts credit another run's cases).
 
 **Done when:** scoring 1,000 synthetic outcomes < 5 s (NFR-6) and numbers hand-verified on a small fixture.
 

@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
-from sqlalchemy import JSON, DateTime, Engine, UniqueConstraint, event, func, inspect
+from sqlalchemy import JSON, DateTime, Engine, UniqueConstraint, event, func, inspect, or_
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.engine import URL
 from sqlalchemy.types import TypeDecorator
@@ -248,6 +248,16 @@ class Store:
         if run is None:
             raise RunNotFoundError(run_id)
         return run
+
+    def runs_overlapping(self, start: datetime, end: datetime, exclude: str) -> list[str]:
+        """Ids of other runs active at any point in [start, end] (unfinished = still active)."""
+        with Session(self.engine) as session:
+            stmt = select(RunRow.id).where(
+                RunRow.id != exclude,
+                col(RunRow.started_at) <= end,
+                or_(col(RunRow.finished_at).is_(None), col(RunRow.finished_at) >= start),
+            )
+            return sorted(session.exec(stmt).all())
 
     def results(self, run_id: str) -> list[TargetResult]:
         with Session(self.engine) as session:

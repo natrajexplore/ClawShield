@@ -91,7 +91,9 @@ def test_mock_satisfies_protocol() -> None:
 
 
 def test_mock_is_deterministic() -> None:
-    target = MockTarget(name="lab", clock=_clock(T0, T0 + timedelta(milliseconds=20)))
+    target = MockTarget(
+        name="lab", clock=_clock(T0, T0 + timedelta(milliseconds=20)), session_prefix="lab"
+    )
     r = target.send(CASE)
     assert r.case_id == "d-001"
     assert r.session_id == "lab-d-001"
@@ -167,3 +169,9 @@ def test_build_rechecks_allowlist() -> None:
 def test_unimplemented_kinds_fail_closed(target: dict[str, Any], allowlist: list[str]) -> None:
     with pytest.raises(TargetError, match="not implemented yet"):
         build_target(_settings(target, allowlist))
+
+
+def test_mock_session_ids_differ_between_instances() -> None:
+    first, second = MockTarget(name="lab").send(CASE), MockTarget(name="lab").send(CASE)
+    assert first.session_id != second.session_id
+    assert first.session_id is not None and first.session_id.startswith("lab-")

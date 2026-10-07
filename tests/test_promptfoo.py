@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 from typer.testing import CliRunner
 
-from clawshield.cli import EXIT_ERROR, EXIT_NOT_IMPLEMENTED, app
+from clawshield.cli import EXIT_ERROR, app
 from clawshield.core.models import Category, Severity
 from clawshield.redteam.corpus import load_corpus
 from clawshield.redteam.promptfoo import (
@@ -214,10 +214,11 @@ def test_cli_ingest_bad_file(tmp_path: Path) -> None:
     assert result.exit_code == EXIT_ERROR and "not a promptfoo results file" in result.output
 
 
-def test_cli_ingest_without_promptfoo_still_fails_closed() -> None:
-    result = runner.invoke(app, ["ingest"])
-    assert result.exit_code == EXIT_NOT_IMPLEMENTED
-    assert "needs lab fixtures" in result.output
+def test_cli_ingest_without_promptfoo_reads_verdicts_and_fails_closed(tmp_path: Path) -> None:
+    # Without --promptfoo, ingest reads DefenseClaw verdicts (tests/test_auditdb.py); a bad
+    # config must still exit non-zero.
+    result = runner.invoke(app, ["ingest", "--config", str(tmp_path / "missing.yaml")])
+    assert result.exit_code == EXIT_ERROR
 
 
 def test_cli_ingest_removes_combined_corpus_that_fails_validation(

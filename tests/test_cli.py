@@ -15,8 +15,8 @@ runner = CliRunner()
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SEED = REPO_ROOT / "redteam" / "corpus" / "seed.jsonl"
 SEED_CASES = sum(1 for line in SEED.read_text(encoding="ascii").splitlines() if line.strip())
-STUB_COMMANDS = ["doctor", "ingest"]
-ALL_COMMANDS = [*STUB_COMMANDS, "run", "runs", "score", "gate", "compare", "tune"]
+STUB_COMMANDS = ["doctor"]
+ALL_COMMANDS = [*STUB_COMMANDS, "ingest", "run", "runs", "score", "gate", "compare", "tune"]
 
 
 def test_help_lists_all_commands() -> None:

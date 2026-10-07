@@ -7,6 +7,7 @@ scripts never mistake a stub for a passing check (especially `gate`).
 import json
 import re
 from collections import Counter
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, NoReturn
@@ -39,6 +40,7 @@ from clawshield.scoring import (
     score_run,
     to_dict,
 )
+from clawshield.sources.auditdb import AuditDbError, AuditDbSource
 from clawshield.sources.snapshot import capture_guardrail_snapshot
 from clawshield.storage.db import RunNotFoundError, Store, StoreSchemaError
 from clawshield.targets.base import TargetError, build_target
@@ -652,6 +654,42 @@ def console(
     )  # fmt: skip
 
 
+def _ingest_verdicts(config: Path, since_text: str | None) -> None:
+    """Read guardrail findings from DefenseClaw's audit.db (ADR 0001) into the store."""
+    try:
+        settings = load_settings(config)
+        store = Store(settings.storage.db_path, redact_responses=settings.storage.redact_responses)
+        if since_text is None:
+            started = store.get_run("latest").started_at
+            since = started - timedelta(seconds=settings.runner.correlation_grace_s)
+        else:
+            since = datetime.fromisoformat(since_text)
+            if since.tzinfo is None:
+                _fail("--since needs a UTC offset, e.g. 2026-10-07T09:00:00+00:00")
+        dc = settings.defenseclaw
+        source = AuditDbSource(dc.audit_db, connector=dc.connector)
+        batch = source.read(since)
+        report = store.add_verdicts(batch.verdicts, ingested_at=datetime.now(UTC))
+    except RunNotFoundError:
+        _fail("no runs yet; pass --since to choose the start of the ingest window")
+    except ValueError as exc:
+        _fail(f"invalid --since: {exc}")
+    except (ConfigError, StoreSchemaError, AuditDbError) as exc:
+        _fail(str(exc))
+    typer.echo(
+        f"read {report.received} guardrail verdict(s) since {since.isoformat()} from "
+        f"{printable(str(source.path))}: {report.new} new, {report.duplicates} already stored"
+    )
+    for reason, count in sorted(batch.skipped.items()):
+        typer.echo(f"  skipped {count}: {printable(reason)}")
+    if report.received == 0:
+        typer.echo(
+            "WARNING: no guardrail verdicts in this window. Check the in-path probe "
+            "(LAB_RUNBOOK step 6) before trusting any score.",
+            err=True,
+        )
+
+
 @app.command()
 def ingest(
     promptfoo: Annotated[
@@ -667,11 +705,19 @@ def ingest(
     inject_var: Annotated[
         str, typer.Option(help="promptfoo var holding the attack text (redteam injectVar).")
     ] = "prompt",
+    since: Annotated[
+        str | None,
+        typer.Option(
+            help="Verdicts at or after this ISO-8601 time with offset (default: latest run "
+            "start minus the correlation grace)."
+        ),
+    ] = None,
     config: ConfigOption = DEFAULT_CONFIG_PATH,
 ) -> None:
-    """Import promptfoo red-team cases (FR-5). DefenseClaw verdict ingest (FR-7) waits for M0."""
+    """Ingest DefenseClaw verdicts (FR-7), or with --promptfoo import red-team cases (FR-5)."""
     if promptfoo is None:
-        _not_implemented("ingest (DefenseClaw verdicts)", "M3, needs lab fixtures")
+        _ingest_verdicts(config, since)
+        return
     if out.resolve() == base.resolve():
         _fail("--out must differ from --base; the base corpus is never modified")
     try:

@@ -5,6 +5,7 @@ defenseclaw:
   connector: openclaw
   expected_version: ""        # pin after M0, e.g. "1.0.x"
   command_timeout_s: 30
+  audit_db: ~/.defenseclaw/audit.db   # verdicts, opened read-only (ADR 0001)
 
 target:
   kind: openclaw              # openclaw | openai_compat | mock

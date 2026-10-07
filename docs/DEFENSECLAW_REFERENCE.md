@@ -31,7 +31,7 @@ and pin the version you test with in `config/clawshield.yaml` (`defenseclaw.expe
 
 ## Verdict data on the guarded path, verified 2026-10-07 (fixtures: `tests/fixtures/defenseclaw/`)
 - **Where verdicts live:** `~/.defenseclaw/audit.db` (SQLite, 29 tables), table `audit_events`.
-  Read it read-only (`file:...?mode=ro`). Useful columns: `id`, `timestamp`, `action` (event
+  Read it read-only (`file:...?mode=ro`); the database runs in WAL mode. ClawShield's reader: ADR 0001. Useful columns: `id`, `timestamp`, `action` (event
   type), `event_name`, `severity` (uppercase), `session_id`, `run_id`, `connector`, `source`,
   `structured_json`. `correlation_*` tables link events of one session.
 - **0.8.10 has no `alerts --json`**; the `alerts` table output is for humans only (reference copy

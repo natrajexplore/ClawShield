@@ -20,7 +20,7 @@ flowchart LR
     end
 
     TC --> OC
-    COL -->|defenseclaw alerts --json| DC
+    COL -->|audit.db read-only (ADR 0001)| DB
     COL -.->|tail| JL
     GT -->|proposed command only| OP[Operator]
     AL --> SL[Slack]

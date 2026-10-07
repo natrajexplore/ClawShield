@@ -54,7 +54,12 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 **Done when:** a full run against the lab completes and is listed by `clawshield runs`.
 
 ## M3 — Collector + correlation
-- [ ] `DefenseClawCliSource` parses `alerts --json` into `Verdict` (fixture-tested).
+- [x] Verdict source parses DefenseClaw output into `Verdict` (fixture-tested).
+      DefenseClaw 0.8.10 has no `alerts --json`, so `AuditDbSource` reads `audit.db` read-only
+      (ADR 0001): guardrail scanner allowlist (`local-pattern`), skips reported by reason,
+      schema-drift check, `clawshield ingest` (default window: latest run start - grace).
+      Verified on the live lab DB: 12 verdicts, 40 plugin scans skipped, DB untouched.
+      `DefenseClawCliSource` waits for a release with `alerts --json`.
 - [ ] Optional `JsonlSource` behind the same interface.
 - [x] Idempotent ingest (NFR-3) using a stable verdict hash.
       `Verdict` model (FR-8, direction may be `unknown`), `stable_verdict_id` (source id,

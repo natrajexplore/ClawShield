@@ -71,6 +71,7 @@ class DefenseClawConfig(_Strict):
     connector: Annotated[str, Field(min_length=1)] = "openclaw"
     expected_version: str = ""
     command_timeout_s: Annotated[float, Field(gt=0, le=600)] = 30
+    audit_db: Path = Path("~/.defenseclaw/audit.db")  # read-only verdict source (ADR 0001)
 
 
 class TargetConfig(_Strict):

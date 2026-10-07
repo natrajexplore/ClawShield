@@ -1,0 +1,74 @@
+{
+  "environment": "linux",
+  "deployment_mode": "",
+  "data_dir": "/home/clawlab/.defenseclaw",
+  "config": "/home/clawlab/.defenseclaw/config.yaml",
+  "audit_db": "/home/clawlab/.defenseclaw/audit.db",
+  "scope": "global user config",
+  "sandbox": {
+    "available": false
+  },
+  "scanners": {
+    "skill-scanner": "installed",
+    "mcp-scanner": "installed",
+    "codeguard": "built-in"
+  },
+  "enforcement": {
+    "blocked_skills": 0,
+    "allowed_skills": 0,
+    "blocked_mcps": 0,
+    "allowed_mcps": 0
+  },
+  "activity": {
+    "total_scans": 6,
+    "active_alerts": 52
+  },
+  "sidecar": {
+    "running": true
+  },
+  "connectors": [
+    {
+      "name": "openclaw",
+      "friendly": "OpenClaw",
+      "mode": "observe",
+      "fail_mode": {
+        "effective": "open",
+        "provenance": "config",
+        "configured": "open",
+        "desired": "open",
+        "runtime": null,
+        "current": null,
+        "drift": [],
+        "sources": [
+          {
+            "name": "config",
+            "mode": "open"
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "manual"
+    }
+  ],
+  "application_protection": {
+    "state_file": "/home/clawlab/.defenseclaw/application_protection_state.json",
+    "enabled": false,
+    "min_confidence": 0.8,
+    "remove_when_gone": false,
+    "gone_after_min": 60,
+    "guardrail_mode": "observe",
+    "asset_policy_mode": "observe",
+    "require_trusted_binary_paths": false,
+    "trusted_binary_prefixes": [],
+    "health_state": "disabled",
+    "last_error": "ai discovery disabled",
+    "discovered": [],
+    "active": [],
+    "skipped": [],
+    "last_activation_errors": {}
+  },
+  "hook_guardian": {
+    "configured": false,
+    "state_file": "/home/clawlab/.defenseclaw/hook_guardian_state.json"
+  }
+}

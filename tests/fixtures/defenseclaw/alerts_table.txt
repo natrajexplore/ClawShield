@@ -1,0 +1,57 @@
+                      Security Alerts (last 50)                       
+┏━━━━┳━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┓
+┃ #  ┃ Severity ┃ Time  ┃ Action       ┃ Target ┃ Details [--show #] ┃
+┡━━━━╇━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━┩
+│ 1  │ CRITICAL │ 09:30 │ scan-finding │        │ finding.observed   │
+│ 2  │ CRITICAL │ 09:30 │ scan-finding │        │ finding.observed   │
+│ 3  │ CRITICAL │ 09:30 │ scan-finding │        │ finding.observed   │
+│ 4  │ CRITICAL │ 09:30 │ scan-finding │        │ finding.observed   │
+│ 5  │ CRITICAL │ 09:30 │ scan-finding │        │ finding.observed   │
+│ 6  │ CRITICAL │ 09:29 │ scan-finding │        │ finding.observed   │
+│ 7  │ CRITICAL │ 09:29 │ scan-finding │        │ finding.observed   │
+│ 8  │ CRITICAL │ 09:29 │ scan-finding │        │ finding.observed   │
+│ 9  │ CRITICAL │ 09:27 │ scan-finding │        │ finding.observed   │
+│ 10 │ CRITICAL │ 09:27 │ scan-finding │        │ finding.observed   │
+│ 11 │ CRITICAL │ 09:27 │ scan-finding │        │ finding.observed   │
+│ 12 │ CRITICAL │ 09:27 │ scan-finding │        │ finding.observed   │
+│ 13 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 14 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 15 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 16 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 17 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 18 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 19 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 20 │ CRITICAL │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 21 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 22 │ LOW      │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 23 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 24 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 25 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 26 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 27 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 28 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 29 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 30 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 31 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 32 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 33 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 34 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 35 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 36 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 37 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 38 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 39 │ HIGH     │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 40 │ CRITICAL │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 41 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 42 │ LOW      │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 43 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 44 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 45 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 46 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 47 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 48 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 49 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+│ 50 │ MEDIUM   │ 06:53 │ scan-finding │        │ finding.observed   │
+└────┴──────────┴───────┴──────────────┴────────┴────────────────────┘
+ Run defenseclaw alerts --show # for full details, or defenseclaw tui 
+                  for the interactive Alerts panel.                   

@@ -1,0 +1,1873 @@
+{
+  "tables": {
+    "actions": [
+      {
+        "name": "id",
+        "type": "TEXT"
+      },
+      {
+        "name": "target_type",
+        "type": "TEXT"
+      },
+      {
+        "name": "target_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "source_path",
+        "type": "TEXT"
+      },
+      {
+        "name": "actions_json",
+        "type": "TEXT"
+      },
+      {
+        "name": "reason",
+        "type": "TEXT"
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME"
+      },
+      {
+        "name": "connector",
+        "type": "TEXT"
+      },
+      {
+        "name": "schema_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "content_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "generation",
+        "type": "INTEGER"
+      },
+      {
+        "name": "binary_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "sidecar_instance_id",
+        "type": "TEXT"
+      }
+    ],
+    "activity_events": [
+      {
+        "name": "id",
+        "type": "TEXT"
+      },
+      {
+        "name": "timestamp",
+        "type": "DATETIME"
+      },
+      {
+        "name": "actor",
+        "type": "TEXT"
+      },
+      {
+        "name": "action",
+        "type": "TEXT"
+      },
+      {
+        "name": "target_type",
+        "type": "TEXT"
+      },
+      {
+        "name": "target_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "reason",
+        "type": "TEXT"
+      },
+      {
+        "name": "before_json",
+        "type": "TEXT"
+      },
+      {
+        "name": "after_json",
+        "type": "TEXT"
+      },
+      {
+        "name": "diff_json",
+        "type": "TEXT"
+      },
+      {
+        "name": "version_from",
+        "type": "TEXT"
+      },
+      {
+        "name": "version_to",
+        "type": "TEXT"
+      },
+      {
+        "name": "request_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "trace_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "run_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "schema_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "content_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "generation",
+        "type": "INTEGER"
+      },
+      {
+        "name": "binary_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "sidecar_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "retention_timestamp_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "alert_acknowledgement_baselines": [
+      {
+        "name": "alert_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "baseline_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "disposition",
+        "type": "TEXT"
+      },
+      {
+        "name": "actor",
+        "type": "TEXT"
+      },
+      {
+        "name": "disposition_at",
+        "type": "DATETIME"
+      },
+      {
+        "name": "legacy_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "raw_legacy_severity",
+        "type": "TEXT"
+      },
+      {
+        "name": "legacy_original_severity",
+        "type": "TEXT"
+      },
+      {
+        "name": "timestamp_provenance",
+        "type": "TEXT"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME"
+      }
+    ],
+    "alert_acknowledgement_health": [
+      {
+        "name": "alert_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "code",
+        "type": "TEXT"
+      },
+      {
+        "name": "health_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "detected_at",
+        "type": "DATETIME"
+      }
+    ],
+    "alert_acknowledgement_operations": [
+      {
+        "name": "operation_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "command_fingerprint",
+        "type": "TEXT"
+      },
+      {
+        "name": "alert_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "requested_disposition",
+        "type": "TEXT"
+      },
+      {
+        "name": "actor",
+        "type": "TEXT"
+      },
+      {
+        "name": "expected_projection_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "outcome",
+        "type": "TEXT"
+      },
+      {
+        "name": "rejection_reason",
+        "type": "TEXT"
+      },
+      {
+        "name": "observed_projection_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "projection_version_before",
+        "type": "INTEGER"
+      },
+      {
+        "name": "projection_version_after",
+        "type": "INTEGER"
+      },
+      {
+        "name": "event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME"
+      }
+    ],
+    "alert_acknowledgement_projection": [
+      {
+        "name": "alert_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "disposition",
+        "type": "TEXT"
+      },
+      {
+        "name": "actor",
+        "type": "TEXT"
+      },
+      {
+        "name": "disposition_at",
+        "type": "DATETIME"
+      },
+      {
+        "name": "projection_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "source",
+        "type": "TEXT"
+      },
+      {
+        "name": "source_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME"
+      }
+    ],
+    "audit_events": [
+      {
+        "name": "id",
+        "type": "TEXT"
+      },
+      {
+        "name": "timestamp",
+        "type": "DATETIME"
+      },
+      {
+        "name": "action",
+        "type": "TEXT"
+      },
+      {
+        "name": "target",
+        "type": "TEXT"
+      },
+      {
+        "name": "actor",
+        "type": "TEXT"
+      },
+      {
+        "name": "details",
+        "type": "TEXT"
+      },
+      {
+        "name": "structured_json",
+        "type": "TEXT"
+      },
+      {
+        "name": "severity",
+        "type": "TEXT"
+      },
+      {
+        "name": "run_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "connector",
+        "type": "TEXT"
+      },
+      {
+        "name": "step_idx",
+        "type": "INTEGER"
+      },
+      {
+        "name": "enforced",
+        "type": "INTEGER"
+      },
+      {
+        "name": "rule_pack_dir",
+        "type": "TEXT"
+      },
+      {
+        "name": "bucket",
+        "type": "TEXT"
+      },
+      {
+        "name": "event_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "trace_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "request_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "policy_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "destination_app",
+        "type": "TEXT"
+      },
+      {
+        "name": "tool_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "tool_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "schema_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "content_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "generation",
+        "type": "INTEGER"
+      },
+      {
+        "name": "binary_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "sidecar_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "source",
+        "type": "TEXT"
+      },
+      {
+        "name": "signal",
+        "type": "TEXT"
+      },
+      {
+        "name": "bucket_catalog_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "payload_json",
+        "type": "TEXT"
+      },
+      {
+        "name": "projected_record_json",
+        "type": "TEXT"
+      },
+      {
+        "name": "record_schema_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "projection_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "redaction_profile",
+        "type": "TEXT"
+      },
+      {
+        "name": "mandatory",
+        "type": "INTEGER"
+      },
+      {
+        "name": "turn_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "evaluation_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "scan_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "finding_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "enforcement_action_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "payload_hmac",
+        "type": "TEXT"
+      },
+      {
+        "name": "integrity_algorithm",
+        "type": "TEXT"
+      },
+      {
+        "name": "integrity_key_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "retention_timestamp_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "correlation_connector_instances": [
+      {
+        "name": "connector_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "connector",
+        "type": "TEXT"
+      },
+      {
+        "name": "export_custody",
+        "type": "TEXT"
+      },
+      {
+        "name": "profile_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "managed_config_digest",
+        "type": "TEXT"
+      },
+      {
+        "name": "is_default",
+        "type": "INTEGER"
+      },
+      {
+        "name": "created_time_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "updated_time_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "correlation_cursors": [
+      {
+        "name": "connector_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "lifecycle_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "execution_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "active_turn_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "active_prompt_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "phase",
+        "type": "TEXT"
+      },
+      {
+        "name": "sequence",
+        "type": "INTEGER"
+      },
+      {
+        "name": "root_agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "parent_agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "root_session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "parent_session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "last_semantic_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "last_record_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "profile_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "active",
+        "type": "INTEGER"
+      },
+      {
+        "name": "updated_time_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "correlation_events": [
+      {
+        "name": "semantic_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "logical_group_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "connector",
+        "type": "TEXT"
+      },
+      {
+        "name": "connector_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "source_rail",
+        "type": "TEXT"
+      },
+      {
+        "name": "event_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "source_time_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "received_time_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "source_event_digest",
+        "type": "TEXT"
+      },
+      {
+        "name": "fingerprint_sha256",
+        "type": "TEXT"
+      },
+      {
+        "name": "first_request_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "first_record_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "profile_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "completeness",
+        "type": "TEXT"
+      }
+    ],
+    "correlation_identifiers": [
+      {
+        "name": "identifier_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "semantic_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "connector_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "namespace",
+        "type": "TEXT"
+      },
+      {
+        "name": "identifier_kind",
+        "type": "TEXT"
+      },
+      {
+        "name": "value_digest",
+        "type": "TEXT"
+      },
+      {
+        "name": "normalized_value",
+        "type": "TEXT"
+      },
+      {
+        "name": "source_field",
+        "type": "TEXT"
+      },
+      {
+        "name": "origin",
+        "type": "TEXT"
+      },
+      {
+        "name": "profile_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "created_time_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "last_seen_time_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "correlation_identity_claims": [
+      {
+        "name": "connector_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "namespace",
+        "type": "TEXT"
+      },
+      {
+        "name": "identifier_kind",
+        "type": "TEXT"
+      },
+      {
+        "name": "value_digest",
+        "type": "TEXT"
+      },
+      {
+        "name": "event_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "rail_a",
+        "type": "TEXT"
+      },
+      {
+        "name": "rail_b",
+        "type": "TEXT"
+      },
+      {
+        "name": "rule_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "rule_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "source_rail",
+        "type": "TEXT"
+      },
+      {
+        "name": "semantic_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "logical_group_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "created_time_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "correlation_observations": [
+      {
+        "name": "record_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "semantic_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "signal",
+        "type": "TEXT"
+      },
+      {
+        "name": "bucket",
+        "type": "TEXT"
+      },
+      {
+        "name": "event_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "observed_time_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "trace_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "span_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "turn_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "lifecycle_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "execution_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "model_request_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "model_response_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "tool_invocation_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "projection_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "status",
+        "type": "TEXT"
+      }
+    ],
+    "correlation_pending_operations": [
+      {
+        "name": "connector_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "operation_namespace",
+        "type": "TEXT"
+      },
+      {
+        "name": "operation_kind",
+        "type": "TEXT"
+      },
+      {
+        "name": "operation_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "operation_type",
+        "type": "TEXT"
+      },
+      {
+        "name": "scope_kind",
+        "type": "TEXT"
+      },
+      {
+        "name": "scope_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "operation_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "turn_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "execution_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "start_semantic_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "start_time_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "input_digest",
+        "type": "TEXT"
+      },
+      {
+        "name": "terminal_semantic_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "terminal_time_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "status",
+        "type": "TEXT"
+      },
+      {
+        "name": "updated_time_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "correlation_receipts": [
+      {
+        "name": "connector_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "source_key_digest",
+        "type": "TEXT"
+      },
+      {
+        "name": "fingerprint_sha256",
+        "type": "TEXT"
+      },
+      {
+        "name": "semantic_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "conflicts_with_semantic_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "first_received_time_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "last_received_time_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "delivery_count",
+        "type": "INTEGER"
+      },
+      {
+        "name": "accepted_time_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "expires_time_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "correlation_relationship_evidence": [
+      {
+        "name": "evidence_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "relationship_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "evidence_record_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "semantic_event_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "evidence_role",
+        "type": "TEXT"
+      },
+      {
+        "name": "integrity_state",
+        "type": "TEXT"
+      },
+      {
+        "name": "created_time_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "correlation_relationships": [
+      {
+        "name": "relationship_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "from_kind",
+        "type": "TEXT"
+      },
+      {
+        "name": "from_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "to_kind",
+        "type": "TEXT"
+      },
+      {
+        "name": "to_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "relationship_type",
+        "type": "TEXT"
+      },
+      {
+        "name": "method",
+        "type": "TEXT"
+      },
+      {
+        "name": "confidence",
+        "type": "INTEGER"
+      },
+      {
+        "name": "rule_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "rule_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "status",
+        "type": "TEXT"
+      },
+      {
+        "name": "created_time_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "last_seen_time_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "findings": [
+      {
+        "name": "id",
+        "type": "TEXT"
+      },
+      {
+        "name": "scan_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "severity",
+        "type": "TEXT"
+      },
+      {
+        "name": "title",
+        "type": "TEXT"
+      },
+      {
+        "name": "description",
+        "type": "TEXT"
+      },
+      {
+        "name": "location",
+        "type": "TEXT"
+      },
+      {
+        "name": "remediation",
+        "type": "TEXT"
+      },
+      {
+        "name": "scanner",
+        "type": "TEXT"
+      },
+      {
+        "name": "tags",
+        "type": "TEXT"
+      },
+      {
+        "name": "rule_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "line_number",
+        "type": "INTEGER"
+      },
+      {
+        "name": "schema_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "content_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "generation",
+        "type": "INTEGER"
+      },
+      {
+        "name": "binary_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "sidecar_instance_id",
+        "type": "TEXT"
+      }
+    ],
+    "judge_responses": [
+      {
+        "name": "id",
+        "type": "TEXT"
+      },
+      {
+        "name": "timestamp",
+        "type": "DATETIME"
+      },
+      {
+        "name": "kind",
+        "type": "TEXT"
+      },
+      {
+        "name": "direction",
+        "type": "TEXT"
+      },
+      {
+        "name": "model",
+        "type": "TEXT"
+      },
+      {
+        "name": "action",
+        "type": "TEXT"
+      },
+      {
+        "name": "severity",
+        "type": "TEXT"
+      },
+      {
+        "name": "latency_ms",
+        "type": "INTEGER"
+      },
+      {
+        "name": "parse_error",
+        "type": "TEXT"
+      },
+      {
+        "name": "raw_response",
+        "type": "TEXT"
+      },
+      {
+        "name": "request_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "trace_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "run_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "input_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "confidence",
+        "type": "REAL"
+      },
+      {
+        "name": "fail_closed_applied",
+        "type": "INTEGER"
+      },
+      {
+        "name": "inspected_model",
+        "type": "TEXT"
+      },
+      {
+        "name": "prompt_template_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "schema_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "content_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "generation",
+        "type": "INTEGER"
+      },
+      {
+        "name": "binary_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "sidecar_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "policy_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "destination_app",
+        "type": "TEXT"
+      },
+      {
+        "name": "tool_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "tool_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "timestamp_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "network_egress_events": [
+      {
+        "name": "id",
+        "type": "TEXT"
+      },
+      {
+        "name": "timestamp",
+        "type": "DATETIME"
+      },
+      {
+        "name": "session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "hostname",
+        "type": "TEXT"
+      },
+      {
+        "name": "url",
+        "type": "TEXT"
+      },
+      {
+        "name": "http_method",
+        "type": "TEXT"
+      },
+      {
+        "name": "protocol",
+        "type": "TEXT"
+      },
+      {
+        "name": "policy_outcome",
+        "type": "TEXT"
+      },
+      {
+        "name": "decision_code",
+        "type": "TEXT"
+      },
+      {
+        "name": "blocked",
+        "type": "INTEGER"
+      },
+      {
+        "name": "severity",
+        "type": "TEXT"
+      },
+      {
+        "name": "details",
+        "type": "TEXT"
+      },
+      {
+        "name": "schema_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "content_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "generation",
+        "type": "INTEGER"
+      },
+      {
+        "name": "binary_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "sidecar_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "connector",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_lifecycle_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_execution_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "user_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "tool_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "root_agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "parent_agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "root_session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "retention_timestamp_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "observability_store_readiness": [
+      {
+        "name": "id",
+        "type": "INTEGER"
+      },
+      {
+        "name": "verification_generation",
+        "type": "INTEGER"
+      },
+      {
+        "name": "last_verified_at",
+        "type": "DATETIME"
+      }
+    ],
+    "quarantine_record_connectors": [
+      {
+        "name": "quarantine_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "connector",
+        "type": "TEXT"
+      },
+      {
+        "name": "associated_at",
+        "type": "DATETIME"
+      }
+    ],
+    "quarantine_records": [
+      {
+        "name": "id",
+        "type": "TEXT"
+      },
+      {
+        "name": "target_type",
+        "type": "TEXT"
+      },
+      {
+        "name": "target_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "original_path",
+        "type": "TEXT"
+      },
+      {
+        "name": "quarantine_path",
+        "type": "TEXT"
+      },
+      {
+        "name": "content_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "reason",
+        "type": "TEXT"
+      },
+      {
+        "name": "state",
+        "type": "TEXT"
+      },
+      {
+        "name": "ownership_json",
+        "type": "TEXT"
+      },
+      {
+        "name": "restore_path",
+        "type": "TEXT"
+      },
+      {
+        "name": "created_at",
+        "type": "DATETIME"
+      },
+      {
+        "name": "updated_at",
+        "type": "DATETIME"
+      }
+    ],
+    "runtime_asset_state": [
+      {
+        "name": "connector",
+        "type": "TEXT"
+      },
+      {
+        "name": "session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "target_type",
+        "type": "TEXT"
+      },
+      {
+        "name": "target_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "source_path",
+        "type": "TEXT"
+      },
+      {
+        "name": "runtime_surface",
+        "type": "TEXT"
+      },
+      {
+        "name": "hook_event",
+        "type": "TEXT"
+      },
+      {
+        "name": "provenance",
+        "type": "TEXT"
+      },
+      {
+        "name": "state",
+        "type": "TEXT"
+      },
+      {
+        "name": "first_observed_at",
+        "type": "DATETIME"
+      },
+      {
+        "name": "last_observed_at",
+        "type": "DATETIME"
+      }
+    ],
+    "scan_findings": [
+      {
+        "name": "id",
+        "type": "TEXT"
+      },
+      {
+        "name": "scan_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "scanner",
+        "type": "TEXT"
+      },
+      {
+        "name": "target",
+        "type": "TEXT"
+      },
+      {
+        "name": "rule_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "category",
+        "type": "TEXT"
+      },
+      {
+        "name": "severity",
+        "type": "TEXT"
+      },
+      {
+        "name": "title",
+        "type": "TEXT"
+      },
+      {
+        "name": "description",
+        "type": "TEXT"
+      },
+      {
+        "name": "location",
+        "type": "TEXT"
+      },
+      {
+        "name": "line_number",
+        "type": "INTEGER"
+      },
+      {
+        "name": "remediation",
+        "type": "TEXT"
+      },
+      {
+        "name": "tags",
+        "type": "TEXT"
+      },
+      {
+        "name": "timestamp",
+        "type": "DATETIME"
+      },
+      {
+        "name": "run_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "request_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "sidecar_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "schema_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "content_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "generation",
+        "type": "INTEGER"
+      },
+      {
+        "name": "binary_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "data_axis",
+        "type": "TEXT"
+      },
+      {
+        "name": "tool_capability_class",
+        "type": "TEXT"
+      },
+      {
+        "name": "content_fingerprint",
+        "type": "TEXT"
+      },
+      {
+        "name": "external_endpoint",
+        "type": "TEXT"
+      },
+      {
+        "name": "turn_id",
+        "type": "INTEGER"
+      },
+      {
+        "name": "decision_path",
+        "type": "TEXT"
+      },
+      {
+        "name": "confidence",
+        "type": "REAL"
+      },
+      {
+        "name": "evaluation_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "retention_timestamp_unix_nano",
+        "type": "INTEGER"
+      },
+      {
+        "name": "evidence_summary",
+        "type": "TEXT"
+      }
+    ],
+    "scan_results": [
+      {
+        "name": "id",
+        "type": "TEXT"
+      },
+      {
+        "name": "scanner",
+        "type": "TEXT"
+      },
+      {
+        "name": "target",
+        "type": "TEXT"
+      },
+      {
+        "name": "timestamp",
+        "type": "DATETIME"
+      },
+      {
+        "name": "duration_ms",
+        "type": "INTEGER"
+      },
+      {
+        "name": "finding_count",
+        "type": "INTEGER"
+      },
+      {
+        "name": "max_severity",
+        "type": "TEXT"
+      },
+      {
+        "name": "raw_json",
+        "type": "TEXT"
+      },
+      {
+        "name": "run_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "verdict",
+        "type": "TEXT"
+      },
+      {
+        "name": "exit_code",
+        "type": "INTEGER"
+      },
+      {
+        "name": "error",
+        "type": "TEXT"
+      },
+      {
+        "name": "schema_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "content_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "generation",
+        "type": "INTEGER"
+      },
+      {
+        "name": "binary_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "agent_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "sidecar_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "session_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "request_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "trace_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "evaluation_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "retention_timestamp_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "schema_version": [
+      {
+        "name": "version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "applied_at",
+        "type": "DATETIME"
+      }
+    ],
+    "sink_health": [
+      {
+        "name": "id",
+        "type": "TEXT"
+      },
+      {
+        "name": "timestamp",
+        "type": "DATETIME"
+      },
+      {
+        "name": "sink_name",
+        "type": "TEXT"
+      },
+      {
+        "name": "sink_kind",
+        "type": "TEXT"
+      },
+      {
+        "name": "outcome",
+        "type": "TEXT"
+      },
+      {
+        "name": "status_code",
+        "type": "INTEGER"
+      },
+      {
+        "name": "latency_ms",
+        "type": "INTEGER"
+      },
+      {
+        "name": "batch_size",
+        "type": "INTEGER"
+      },
+      {
+        "name": "error",
+        "type": "TEXT"
+      },
+      {
+        "name": "queue_depth",
+        "type": "INTEGER"
+      },
+      {
+        "name": "dropped_count",
+        "type": "INTEGER"
+      },
+      {
+        "name": "schema_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "content_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "generation",
+        "type": "INTEGER"
+      },
+      {
+        "name": "binary_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "sidecar_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "retention_timestamp_unix_nano",
+        "type": "INTEGER"
+      }
+    ],
+    "target_snapshots": [
+      {
+        "name": "id",
+        "type": "TEXT"
+      },
+      {
+        "name": "target_type",
+        "type": "TEXT"
+      },
+      {
+        "name": "target_path",
+        "type": "TEXT"
+      },
+      {
+        "name": "content_hash",
+        "type": "TEXT"
+      },
+      {
+        "name": "dependency_hashes",
+        "type": "TEXT"
+      },
+      {
+        "name": "config_hashes",
+        "type": "TEXT"
+      },
+      {
+        "name": "network_endpoints",
+        "type": "TEXT"
+      },
+      {
+        "name": "scan_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "captured_at",
+        "type": "DATETIME"
+      },
+      {
+        "name": "schema_version",
+        "type": "INTEGER"
+      },
+      {
+        "name": "generation",
+        "type": "INTEGER"
+      },
+      {
+        "name": "binary_version",
+        "type": "TEXT"
+      },
+      {
+        "name": "sidecar_instance_id",
+        "type": "TEXT"
+      },
+      {
+        "name": "scanner_fingerprint",
+        "type": "TEXT"
+      }
+    ]
+  },
+  "row_counts": {
+    "actions": 0,
+    "activity_events": 0,
+    "alert_acknowledgement_baselines": 0,
+    "alert_acknowledgement_health": 0,
+    "alert_acknowledgement_operations": 0,
+    "alert_acknowledgement_projection": 0,
+    "audit_events": 292,
+    "correlation_connector_instances": 1,
+    "correlation_cursors": 0,
+    "correlation_events": 20,
+    "correlation_identifiers": 150,
+    "correlation_identity_claims": 0,
+    "correlation_observations": 130,
+    "correlation_pending_operations": 10,
+    "correlation_receipts": 20,
+    "correlation_relationship_evidence": 100,
+    "correlation_relationships": 90,
+    "findings": 0,
+    "judge_responses": 0,
+    "network_egress_events": 0,
+    "observability_store_readiness": 1,
+    "quarantine_record_connectors": 0,
+    "quarantine_records": 0,
+    "runtime_asset_state": 0,
+    "scan_findings": 52,
+    "scan_results": 6,
+    "schema_version": 29,
+    "sink_health": 0,
+    "target_snapshots": 1
+  }
+}

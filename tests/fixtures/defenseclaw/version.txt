@@ -1,0 +1,13 @@
+
+  DefenseClaw versions
+
+  COMPONENT  VERSION  STATUS  ORIGIN
+  ---------  -------  ------  ----------------------------------------
+  cli        0.8.10   ok      defenseclaw (python)
+  gateway    0.8.10   ok      /home/clawlab/.local/bin/defenseclaw-gateway
+                              ↳ (commit=bf45995c7fa691f34ffa89b6f0468c93a6207dea, built=2026-07-29T23:23:27Z)
+  plugin     0.8.10   ok      /home/clawlab/.openclaw/extensions/defenseclaw
+
+  OK All components in sync.
+
+OpenClaw 2026.7.35 (aa94808)

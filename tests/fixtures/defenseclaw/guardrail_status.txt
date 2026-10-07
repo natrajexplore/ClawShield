@@ -1,0 +1,12 @@
+
+  Guardrail status
+  ----------------
+  • enabled:    yes
+      Connector  Key       State    Mode     Fail  Rule pack  HILT  Scan        Judge
+      ---------  --------  -------  -------  ----  ---------  ----  ----------  -----
+      OpenClaw   openclaw  enabled  observe  open  default    off   regex_only  off  
+  • fail = invalid, unauthorized, incomplete, or unreachable gateway responses
+  • port:       4000
+
+  Disable with:  defenseclaw guardrail disable
+

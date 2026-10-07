@@ -127,15 +127,20 @@ def _evidence_quality(e: GateEvidence) -> Criterion:
 def _observe_period(e: GateEvidence, t: GateThresholds) -> Criterion:
     threshold = f">= {t.min_observe_days} days in observe mode"
     if e.observe_since is None:
-        return Criterion("observe_period", threshold, "no qualifying run", "FAIL")
+        return Criterion(
+            "observe_period", threshold, "no run with a verified observe-mode snapshot", "FAIL",
+            "every run's status --json must show the connector enabled in observe mode",
+        )  # fmt: skip
     days = (e.now - e.observe_since).total_seconds() / 86_400
-    observed = f"{days:.1f} days since first run with a snapshot ({e.observe_since:%Y-%m-%d})"
+    observed = (
+        f"{days:.1f} days of unbroken verified observe mode (since {e.observe_since:%Y-%m-%d})"
+    )
     if days < t.min_observe_days:
         return Criterion("observe_period", threshold, observed, "FAIL")
     if not e.observe_mode_verified:
         return Criterion(
             "observe_period", threshold, observed, "UNVERIFIED",
-            "observe mode cannot be confirmed from the snapshot yet (format pending M0)",
+            "this run's snapshot does not verify observe mode (see its status --json)",
         )  # fmt: skip
     return Criterion("observe_period", threshold, observed, "PASS")
 

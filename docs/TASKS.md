@@ -140,7 +140,11 @@ correctly produce no verdict (allowed benign traffic) count against it (ADR 0003
       PASS / FAIL / UNVERIFIED per criterion; overall PASS only if all pass (exit 0, else 3).
       `gate.evaluate_on: confidence_bound` (95% Wilson bounds) per operator decision; added
       evidence_quality and config_consistency criteria; `--mode action` command only on PASS.
-      Observe mode stays UNVERIFIED until the snapshot format is verified (M0).
+      Observe mode verified from each run's `status --json` snapshot (`core/posture.py`):
+      connector enabled + mode observe + sidecar running. Observe period = the unbroken streak
+      of verified runs; any action-mode, disabled, missing or unparseable snapshot restarts it.
+      Lab: all 3 runs verified, streak since 2026-10-07 10:18 UTC (earliest PASS 2026-10-14).
+      Runs answered by the stub model mark canary_leaks UNVERIFIED.
 - [x] Evidence pack export (FR-18): `reports/gate-<date>.md` + `.json`.
       `clawshield gate --export reports/` -> gate-<date>-<run>.json/.md for any result;
       ids only (no prompt/response text), Markdown-escaped data, JSON SHA-256 in the .md,

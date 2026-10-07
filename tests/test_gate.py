@@ -107,6 +107,14 @@ def _card(cases: list[Case], *, missed: int = 0, benign_blocked: int = 0, leaked
     return score(inputs, verdicts, detected_min=Severity.MEDIUM, block_at=Severity.CRITICAL)
 
 
+LAB_SNAPSHOT = {
+    "available": True,
+    "defenseclaw_status": json.loads(
+        (Path(__file__).parent / "fixtures" / "defenseclaw" / "status.json").read_text("utf-8")
+    ),
+}
+
+
 def _evidence(card: Any, **overrides: Any) -> GateEvidence:
     base = GateEvidence(
         run_id="r1", card=card, snapshot_available=True, verdicts_in_window=1,
@@ -200,7 +208,7 @@ def test_observe_period(perfect: Any) -> None:
     assert _status(_gate(exactly))["observe_period"] == "PASS"
     unverified = _gate(_evidence(perfect, observe_mode_verified=False))
     c = next(c for c in unverified.criteria if c.name == "observe_period")
-    assert c.status == "UNVERIFIED" and "observe mode cannot be confirmed" in c.detail
+    assert c.status == "UNVERIFIED" and "does not verify observe mode" in c.detail
 
 
 def test_critical_recall_bound_vs_point_estimate() -> None:
@@ -295,7 +303,7 @@ def test_gate_run_is_unverified_even_with_perfect_evidence(tmp_path: Path) -> No
     })  # fmt: skip
     store = Store(tmp_path / "c.db")
     report = execute_run(settings=settings, corpus=load_corpus(corpus), store=store,
-                         target=MockTarget(name="lab"), snapshot={"available": True},
+                         target=MockTarget(name="lab"), snapshot=LAB_SNAPSHOT,
                          declared=DECLARED)  # fmt: skip
     run = store.get_run(report.run_id)
     old = run.started_at - timedelta(days=8)
@@ -309,10 +317,20 @@ def test_gate_run_is_unverified_even_with_perfect_evidence(tmp_path: Path) -> No
     ]  # fmt: skip
     store.add_verdicts(verdicts, ingested_at=datetime.now(UTC))
     _, gate = gate_run(store, settings, report.run_id)
-    statuses = _status(gate)
-    assert statuses.pop("observe_period") == "UNVERIFIED"
-    assert set(statuses.values()) == {"PASS"}, statuses
-    assert gate.overall == "UNVERIFIED" and gate.proposed_command is None
+    assert set(_status(gate).values()) == {"PASS"}, _status(gate)
+    assert gate.overall == "PASS" and gate.proposed_command is not None
+    assert "--mode action" in gate.proposed_command
+    # A run in between whose snapshot lacks status --json breaks the observe streak.
+    mid = run.started_at - timedelta(days=1)
+    gap = {
+        "id": "gap",
+        "started_at": mid,
+        "finished_at": mid,
+        "guardrail_snapshot": {"available": True},
+    }
+    store.create_run(RunRow(**{**run.model_dump(), **gap}))
+    _, broken = gate_run(store, settings, report.run_id)
+    assert _status(broken)["observe_period"] == "FAIL" and broken.proposed_command is None
 
 
 # --- CLI ------------------------------------------------------------------------------------------
@@ -374,21 +392,22 @@ def test_sample_size_helpers_return_none_when_unreachable() -> None:
     assert cases_needed_for_fpr(0.0, limit=500) is None
 
 
-def test_first_snapshot_run_start_none_without_snapshot(tmp_path: Path) -> None:
+def test_snapshots_until_is_ordered_and_bounded(tmp_path: Path) -> None:
     store = Store(tmp_path / "c.db")
-    assert store.first_snapshot_run_start() is None
-    store.create_run(RunRow(id="r", started_at=NOW, finished_at=NOW, target_kind="mock",
-                            target_name="m", target_identity="m", corpus_path="c",
-                            corpus_hash="0" * 64, case_count=0,
-                            guardrail_snapshot={"available": False}))  # fmt: skip
-    assert store.first_snapshot_run_start() is None
+    assert store.snapshots_until(NOW) == []
+    for i, offset in enumerate((2, 0, 1)):
+        store.create_run(RunRow(id=f"r{i}", started_at=NOW - timedelta(days=offset),
+                                target_kind="mock", target_name="m", target_identity="m",
+                                corpus_path="c", corpus_hash="0" * 64, case_count=0,
+                                guardrail_snapshot={"available": True, "n": i}))  # fmt: skip
+    got = store.snapshots_until(NOW - timedelta(days=1))
+    assert [snap["n"] for _, snap in got] == [0, 2]  # oldest first; the later run excluded
 
 
 def test_cli_prints_action_command_and_exits_0_only_on_pass(
     lab: str, monkeypatch: pytest.MonkeyPatch, perfect: Any
 ) -> None:
-    # PASS is unreachable in real use until observe mode is verifiable; force it here to
-    # test the most consequential output path.
+    # Force a PASS report to test the most consequential CLI output path in isolation.
     passing = _gate(_evidence(perfect))
     assert passing.overall == "PASS"
     monkeypatch.setattr(cli, "gate_run", lambda *a, **k: (None, passing))

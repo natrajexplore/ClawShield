@@ -277,18 +277,16 @@ class Store:
             )
             return list(session.exec(stmt).all())
 
-    def first_snapshot_run_start(self) -> datetime | None:
-        """Start of the earliest complete run that captured a guardrail snapshot."""
+    def snapshots_until(self, until: datetime) -> list[tuple[datetime, dict[str, Any]]]:
+        """(start, guardrail snapshot) of every run started at or before `until`, oldest
+        first: the observe-period history (core/posture.py)."""
         with Session(self.engine) as session:
             stmt = (
                 select(RunRow)
-                .where(col(RunRow.finished_at).is_not(None))
-                .order_by(col(RunRow.started_at))
+                .where(col(RunRow.started_at) <= until)
+                .order_by(col(RunRow.started_at), col(RunRow.id))
             )
-            for run in session.exec(stmt):
-                if run.guardrail_snapshot.get("available"):
-                    return run.started_at
-        return None
+            return [(run.started_at, run.guardrail_snapshot) for run in session.exec(stmt)]
 
     def runs_overlapping(self, start: datetime, end: datetime, exclude: str) -> list[str]:
         """Ids of other runs active at any point in [start, end] (unfinished = still active)."""

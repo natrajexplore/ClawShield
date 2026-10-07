@@ -22,6 +22,7 @@ from clawshield.core.gate import (
     evaluate_gate,
 )
 from clawshield.core.models import Category, DeclaredConfig, Verdict
+from clawshield.core.posture import guardrail_posture, observe_streak_start
 from clawshield.core.regression import RegressionResult, detect_regression
 from clawshield.core.score import CaseInput, Interval, Scorecard, SliceScore, score
 from clawshield.redteam.corpus import CorpusError, load_corpus
@@ -220,6 +221,7 @@ def gate_run(
     """Evaluate the promotion gate (FR-16, FR-17) on one scored run."""
     rs = score_run(store, settings, run_id, corpus_path)
     g = settings.gate
+    connector = settings.defenseclaw.connector
     thresholds = GateThresholds(
         min_observe_days=g.min_observe_days,
         min_critical_recall=g.min_critical_recall,
@@ -240,8 +242,10 @@ def gate_run(
         snapshot_available=rs.snapshot_available,
         verdicts_in_window=rs.verdicts_in_window,
         overlapping_runs=rs.overlapping_runs,
-        observe_since=store.first_snapshot_run_start(),
-        observe_mode_verified=False,  # needs snapshot parsing; DefenseClaw format pending M0
+        observe_since=observe_streak_start(store.snapshots_until(rs.run.started_at), connector),
+        observe_mode_verified=guardrail_posture(
+            rs.run.guardrail_snapshot, connector
+        ).observe_verified,
         declared=declared,
         now=now or datetime.now(UTC),
         responses_stubbed=any(

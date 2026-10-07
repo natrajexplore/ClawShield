@@ -1,6 +1,7 @@
 {% extends "base.html" %}
-{% from "_macros.html" import pct, ci, bars %}
+{% from "_macros.html" import pct, ci, bars, mock_banner %}
 {% block title %}Run {{ rs.run.id }}{% endblock %}
+{% block banner %}{{ mock_banner(rs.run) }}{% endblock %}
 {% block content %}
 {% set o = card.overall %}
 <h1>Run <code>{{ rs.run.id }}</code></h1>

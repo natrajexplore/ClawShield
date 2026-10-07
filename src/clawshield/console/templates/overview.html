@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pct, ci, status, mock_banner %}
+{% block title %}Overview{% endblock %}
+{% block banner %}{{ mock_banner(latest.run if latest else none) }}{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Prompt-injection firewall readiness</p>
+    <h1>Is the DefenseClaw guardrail ready to block?</h1>
+    <p class="sub">ClawShield attacks the agent, reads DefenseClaw's verdicts, scores them and
+      decides when the guardrail can safely move from <code>observe</code> to <code>action</code>.
+      Every change is a proposal: a human runs it.</p>
+  </div>
+  <div class="verdict">
+    <span class="k">Promotion gate</span>
+    {% if report %}{{ status(report.overall) }}
+      <span class="muted">run <a href="/runs/{{ rs.run.id|urlencode }}/gate"><code>{{ rs.run.id }}</code></a></span>
+    {% else %}<span class="badge unverified">NO EVIDENCE</span>{% endif %}
+  </div>
+</section>
+
+{% if not listings %}
+  <p class="empty">No runs yet. Start one with <code>clawshield run --corpus redteam/corpus/seed.jsonl</code>,
+    then <code>clawshield ingest</code>.</p>
+{% elif not latest %}
+  <p class="warn">No complete run yet: the latest run is still in progress or was interrupted.</p>
+{% elif problem %}
+  <p class="warn">Latest run <code>{{ latest.run.id }}</code> cannot be scored: {{ problem }}</p>
+{% else %}
+{% set o = rs.card.overall %}
+<ol class="pipeline" aria-label="Promotion pipeline for run {{ rs.run.id }}">
+  <li class="{{ 'done' if not latest.errors else 'attn' }}">
+    <span class="n">1</span><span class="t">Attack</span>
+    <span class="d">{{ latest.results }} cases sent, {{ latest.errors }} errors</span></li>
+  <li class="{{ 'done' if rs.verdicts_in_window else 'attn' }}">
+    <span class="n">2</span><span class="t">Observe</span>
+    <span class="d">{{ rs.verdicts_in_window }} DefenseClaw verdicts{% if rs.verdicts_in_window %} &middot;
+      {{ pct(rs.correlation.attribution_rate) }} attributed{% else %}: run <code>clawshield ingest</code>{% endif %}</span></li>
+  <li class="done">
+    <span class="n">3</span><span class="t">Score</span>
+    <span class="d">{{ rs.card.scored }}/{{ rs.card.cases_total }} cases scored</span></li>
+  <li class="{{ 'attn' if recs else 'done' }}">
+    <span class="n">4</span><span class="t">Tune</span>
+    <span class="d"><a href="/runs/{{ rs.run.id|urlencode }}/recommendations">{{ recs|length }} recommendation{{ '' if recs|length == 1 else 's' }}</a></span></li>
+  <li class="{{ report.overall|lower }}">
+    <span class="n">5</span><span class="t">Gate</span>
+    <span class="d"><a href="/runs/{{ rs.run.id|urlencode }}/gate">{{ report.overall }}</a></span></li>
+  <li class="{{ 'ready' if report.proposed_command else 'locked' }}">
+    <span class="n">6</span><span class="t">Promote</span>
+    <span class="d">{{ "command ready for review" if report.proposed_command else "locked until PASS" }}</span></li>
+</ol>
+
+<section class="tiles">
+  <div class="tile"><span class="k">Recall (all malicious)</span><span class="v">{{ pct(o.recall) }}</span><span class="c">{{ ci(o.recall_ci) }}</span></div>
+  <div class="tile"><span class="k">False-positive rate</span><span class="v">{{ pct(o.fpr) }}</span><span class="c">{{ ci(o.fpr_ci) }}</span></div>
+  <div class="tile"><span class="k">Benign block FPR</span><span class="v">{{ pct(o.block_fpr) }}</span><span class="c">target &le; {{ pct(fpr_target) }}</span></div>
+  <div class="tile"><span class="k">Canary leaks</span><span class="v {{ 'bad-text' if rs.card.leaked_case_ids else '' }}">{{ rs.card.leaked_case_ids|length }}</span><span class="c">target 0</span></div>
+</section>
+
+<h2>Gate criteria</h2>
+<ul class="criteria">
+  {% for c in report.criteria %}
+  <li class="{{ c.status|lower }}">{{ status(c.status) }}
+    <span class="name">{{ c.name }}</span>
+    <span class="obs">{{ c.observed }} <span class="muted">/ {{ c.threshold }}</span></span>
+    {% if c.detail %}<span class="detail">{{ c.detail }}</span>{% endif %}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if listings %}
+<h2>Recent runs</h2>
+<table>
+  <thead><tr><th>Run</th><th>Started (UTC)</th><th>Target</th><th>Cases</th><th>Leaks</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for item in listings %}
+    <tr><td><a href="/runs/{{ item.run.id|urlencode }}">{{ item.run.id }}</a></td>
+      <td>{{ item.run.started_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td>{{ item.run.target_name }}{% if item.run.target_kind == "mock" %} <span class="chip">mock</span>{% endif %}</td>
+      <td>{{ item.results }}/{{ item.run.case_count }}</td>
+      <td class="{{ 'bad-text' if item.leaks else '' }}">{{ item.leaks }}</td>
+      <td>{% if item.complete %}complete{% else %}<span class="bad-text">INCOMPLETE</span>{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p><a href="/runs">All runs &rarr;</a></p>
+{% endif %}
+{% endblock %}

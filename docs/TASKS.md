@@ -162,6 +162,9 @@ correctly produce no verdict (allowed benign traffic) count against it (ADR 0003
 - [x] Use the frontend-design skill for visual direction; keep it HTMX + server templates.
       Deviation: no HTMX/JS at all. A read-only console needs none, and zero script allows
       CSP script-src 'none' and removes the CDN/supply-chain dependency.
+      2026-10-07: Overview page at `/` (pipeline Attack -> Observe -> Score -> Tune -> Gate ->
+      Promote, headline metrics, gate criteria, recent runs); mock-target runs bannered as mock;
+      light/dark theme from the OS, responsive layout.
 
 **Done when:** the full story (baseline → tune → pass gate) is visible without the CLI.
 

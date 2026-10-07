@@ -25,3 +25,7 @@
   </svg>
 </figure>
 {%- endmacro %}
+
+{% macro mock_banner(run) -%}
+{% if run and run.target_kind == "mock" %}<p class="demo-banner">Mock target: these numbers come from ClawShield's built-in stand-in model, not a live DefenseClaw lab.</p>{% endif %}
+{%- endmacro %}

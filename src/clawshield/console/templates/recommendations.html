@@ -1,5 +1,7 @@
 {% extends "base.html" %}
+{% from "_macros.html" import mock_banner %}
 {% block title %}Recommendations {{ rs.run.id }}{% endblock %}
+{% block banner %}{{ mock_banner(rs.run) }}{% endblock %}
 {% block content %}
 <h1>Recommendations</h1>
 <p class="sub">Run <a href="/runs/{{ rs.run.id|urlencode }}"><code>{{ rs.run.id }}</code></a> &middot;

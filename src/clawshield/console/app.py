@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -31,6 +31,7 @@ from clawshield.tuner.recommend import recommend_suppressions
 
 HERE = Path(__file__).parent
 TREND_RUNS = 20
+OVERVIEW_RUNS = 6
 ALLOWED_HOSTS = ("127.0.0.1", "localhost", "[::1]")  # DNS-rebinding defence
 MAX_TEXT = 200
 
@@ -140,9 +141,27 @@ def create_app(settings: Settings) -> FastAPI:
     def page(request: Request, name: str, **context: Any) -> HTMLResponse:
         return templates.TemplateResponse(request, name, context)
 
-    @app.get("/", include_in_schema=False)
-    def root() -> RedirectResponse:
-        return RedirectResponse("/runs", status_code=303)
+    @app.get("/", response_class=HTMLResponse)
+    def overview(request: Request) -> HTMLResponse:
+        s = store()
+        listings = s.list_runs(OVERVIEW_RUNS) if s else []
+        latest = next((item for item in listings if item.complete), None)
+        rs = report = recs = None
+        problem = ""
+        if s is not None and latest is not None:
+            try:
+                rs, report = gate_run(s, settings, latest.run.id)
+            except (ScoringError, CorpusError) as exc:
+                problem = str(exc)
+            else:
+                recs = recommend_suppressions(
+                    rs.inputs, rs.verdicts, detected_min=settings.scoring.detected_min_severity,
+                    connector=settings.defenseclaw.connector,
+                )  # fmt: skip
+        return page(
+            request, "overview.html", listings=listings, latest=latest, rs=rs,
+            report=report, recs=recs, problem=problem,
+        )  # fmt: skip
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:

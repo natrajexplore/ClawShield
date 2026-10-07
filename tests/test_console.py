@@ -70,7 +70,7 @@ def test_foreign_host_header_is_rejected_dns_rebinding(lab: dict[str, Any]) -> N
     assert lab["client"].get("/runs", headers={"Host": "localhost:8088"}).status_code == 200
 
 
-@pytest.mark.parametrize("path", ["/runs", "/trend", "/verdicts", "/healthz"])
+@pytest.mark.parametrize("path", ["/", "/runs", "/trend", "/verdicts", "/healthz"])
 def test_security_headers_on_every_response(lab: dict[str, Any], path: str) -> None:
     response = _get(lab, path)
     for name, value in SECURITY_HEADERS.items():
@@ -112,9 +112,17 @@ def test_no_api_docs_exposed(lab: dict[str, Any]) -> None:
 # --- pages --------------------------------------------------------------------------------------
 
 
-def test_root_redirects_to_runs(lab: dict[str, Any]) -> None:
-    response = lab["client"].get("/", follow_redirects=False)
-    assert response.status_code == 303 and response.headers["location"] == "/runs"
+def test_overview_tells_the_pipeline_story(lab: dict[str, Any]) -> None:
+    html = _get(lab, "/").text
+    assert all(step in html for step in ("Attack", "Observe", "Score", "Tune", "Gate", "Promote"))
+    assert "Promotion gate" in html and "badge fail" in html and "locked until PASS" in html
+    assert "Gate criteria" in html and all(r in html for r in lab["runs"])
+    assert "Mock target" in html and 'aria-current="page">Overview' in html
+
+
+def test_mock_banner_only_on_mock_run_pages(lab: dict[str, Any]) -> None:
+    assert "Mock target" in _get(lab, f"/runs/{lab['runs'][0]}/gate").text
+    assert "Mock target" not in _get(lab, "/verdicts").text
 
 
 def test_runs_page_lists_both_runs(lab: dict[str, Any]) -> None:
@@ -179,6 +187,32 @@ def test_changed_corpus_gives_409(lab: dict[str, Any], tmp_path: Path) -> None:
     assert response.status_code == 409 and "has changed since run" in response.text
 
 
+def test_overview_when_latest_run_cannot_be_scored(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = _config(tmp_path)
+    corpus = tmp_path / "corpus.jsonl"
+    corpus.write_text(SEED.read_text(encoding="utf-8"), encoding="utf-8")
+    monkeypatch.setattr(cli, "capture_guardrail_snapshot", lambda cfg: {"available": True})
+    args = ["run", "--config", str(config), "--corpus", str(corpus)]
+    assert cli_runner.invoke(cli_app, args).exit_code == 0
+    client = TestClient(create_app(load_settings(config)), base_url="http://127.0.0.1")
+    corpus.write_text(SEED.read_text(encoding="utf-8").split("\n", 1)[1], encoding="utf-8")
+    assert "cannot be scored" in client.get("/").text
+
+
+def test_overview_with_only_an_unfinished_run(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    Store(tmp_path / "c.db").create_run(RunRow(
+        id="running", started_at=datetime.now(UTC), target_kind="mock", target_name="m",
+        target_identity="m", corpus_path=str(SEED), corpus_hash="x", case_count=1,
+        guardrail_snapshot={},
+    ))  # fmt: skip
+    client = TestClient(create_app(load_settings(config)), base_url="http://127.0.0.1")
+    html = client.get("/").text
+    assert "No complete run yet" in html and "INCOMPLETE" in html
+
+
 def test_empty_state(tmp_path: Path) -> None:
     settings = Settings.model_validate({
         "target": {"kind": "mock", "name": "m"}, "targets": {"allowlist": ["m"]},
@@ -186,6 +220,7 @@ def test_empty_state(tmp_path: Path) -> None:
     })  # fmt: skip
     client = TestClient(create_app(settings), base_url="http://127.0.0.1")
     assert "No runs yet" in client.get("/runs").text
+    assert "No runs yet" in client.get("/").text and "NO EVIDENCE" in client.get("/").text
     assert "No DefenseClaw verdicts ingested yet" in client.get("/verdicts").text
     assert "Need at least two" in client.get("/trend").text
     assert client.get("/runs/x").status_code == 404

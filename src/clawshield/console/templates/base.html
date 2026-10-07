@@ -8,15 +8,18 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+  {% set path = request.url.path %}
   <header>
-    <a class="brand" href="/runs">ClawShield</a>
+    <a class="brand" href="/"><span class="mark" aria-hidden="true"></span>ClawShield</a>
     <nav>
-      <a href="/runs">Runs</a>
-      <a href="/trend">Trend</a>
-      <a href="/verdicts">Verdicts</a>
+      <a href="/" {% if path == "/" %}aria-current="page"{% endif %}>Overview</a>
+      <a href="/runs" {% if path.startswith("/runs") %}aria-current="page"{% endif %}>Runs</a>
+      <a href="/trend" {% if path == "/trend" %}aria-current="page"{% endif %}>Trend</a>
+      <a href="/verdicts" {% if path == "/verdicts" %}aria-current="page"{% endif %}>Verdicts</a>
     </nav>
-    <span class="local">local read-only console</span>
+    <span class="local">local &middot; read-only</span>
   </header>
+  {% block banner %}{% endblock %}
   <main>{% block content %}{% endblock %}</main>
   <footer>ClawShield {{ version }} &middot; proposes changes, never applies them</footer>
 </body>

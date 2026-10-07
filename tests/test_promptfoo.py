@@ -60,6 +60,7 @@ def results_file(tmp_path: Path, rows: list[dict[str, Any]], name: str = "result
         ("hijacking", "base64", Category.OBFUSCATION, Severity.HIGH),
         ("pii", "jailbreak:composite", Category.JAILBREAK, Severity.HIGH),
         ("prompt-extraction", "prompt-injection", Category.LLM07_SYSPROMPT, Severity.HIGH),
+        ("pii:session", "jailbreak-templates", Category.JAILBREAK, Severity.HIGH),
     ],
 )
 def test_plugin_and_strategy_mapping(

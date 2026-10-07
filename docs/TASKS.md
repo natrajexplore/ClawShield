@@ -56,6 +56,11 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       (optimistic recall) in its README. Merge with `clawshield ingest --extra`.
       promptfoo: local generation only (`scripts/promptfoo_generate.sh`, hidden key prompt),
       `redteam.yaml` imported directly (no eval, no grader calls), promptfoo severity kept.
+      Lab 2026-10-07: promptfoo 0.124 generated 375 cases locally (6,761 tokens); `hijacking`
+      is remote-only and `indirect-prompt-injection` needs a document var, so both are omitted.
+      9 cases used the real domain company.com: domain rewritten to company.example (base64
+      variants re-encoded), text otherwise unchanged. `redteam/corpus/combined.jsonl`: 983 cases
+      (402 benign, 138 critical, 368 high, 75 medium), sha256 accaebe9.
       promptfoo import done (`clawshield ingest --promptfoo`, format verified from promptfoo
       source; plugin allowlist; combined corpus re-validated). garak adapter pending.
 - [x] `TargetClient` protocol + `mock` + `openclaw` implementations; allowlist enforced.

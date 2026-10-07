@@ -130,7 +130,7 @@ def _category(plugin: str, strategy: str | None) -> Category | None:
     if strategy:
         if strategy in OBFUSCATION_STRATEGIES:
             return Category.OBFUSCATION if plugin in PLUGIN_CATEGORIES else None
-        if strategy == "jailbreak" or strategy.startswith("jailbreak:"):
+        if strategy in ("jailbreak", "jailbreak-templates") or strategy.startswith("jailbreak:"):
             return Category.JAILBREAK if plugin in PLUGIN_CATEGORIES else None
     return PLUGIN_CATEGORIES.get(plugin)
 

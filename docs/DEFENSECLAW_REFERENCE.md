@@ -4,6 +4,24 @@ Verified against the official docs on 2026-10-06. Canonical source:
 https://cisco-ai-defense.github.io/defenseclaw/docs/ — re-check after any DefenseClaw upgrade
 and pin the version you test with in `config/clawshield.yaml` (`defenseclaw.expected_version`).
 
+## Lab install, verified 2026-10-07 (Ubuntu 26.04.1 VM, user `clawlab`)
+- OpenClaw **2026.9.8** via `openclaw.ai/install.sh --no-onboard --no-prompt`: no sudo; with a
+  root-owned npm prefix it switches to `~/.npm-global`. Gateway: systemd **user** service
+  `openclaw-gateway.service`, loopback `127.0.0.1:18789`. Needs `loginctl enable-linger <user>`.
+  Onboarding needs a real TTY (no pipes); `--non-interactive --accept-risk` exists for automation.
+- DefenseClaw **0.8.10** via the release `install.sh --connector openclaw --yes`: user-local
+  (`~/.defenseclaw`, `~/.local/bin`), no sudo when OpenClaw is already on PATH. Verifies release
+  checksums with cosign pinned to `cisco-ai-defense/defenseclaw/.github/workflows/release.yaml@refs/heads/main`.
+  Requires OpenClaw >= 2026.3.24 (else offers to update it; `--yes` would accept). Python must be
+  `>=3.10,<3.14`; with only 3.14 present it installs a uv-managed Python 3.12. Needs `uv`.
+- Post-install hint: `defenseclaw init --connector openclaw --profile observe` (`init` also has
+  `--non-interactive`, `--yes`, `--enable-guardrail`, `--observe-all`, `--action-connectors`).
+- `defenseclaw doctor` before `init`: FAIL config file, FAIL sidecar API (port **18970**),
+  FAIL credential `OPENCLAW_GATEWAY_TOKEN` (`defenseclaw keys set OPENCLAW_GATEWAY_TOKEN`),
+  WARN default rule pack not on disk ("enforcement would run with no rule packs"); default
+  detection `regex_judge` with judge disabled. Doctor then **crashes** (FileNotFoundError on
+  `~/.defenseclaw/config.yaml`) in its observability section - a DefenseClaw bug; run `init` first.
+
 ## Install & health
 ```bash
 curl -LsSf https://github.com/cisco-ai-defense/defenseclaw/releases/latest/download/install.sh | bash

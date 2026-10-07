@@ -7,6 +7,7 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 > connector on native Windows, and WSL/Docker/VM workarounds from Windows are unsupported.
 > Run M0 on a Linux/macOS machine with OpenClaw and DefenseClaw both installed there.
 > M1 tasks that need no live lab proceed on Windows meanwhile.
+> Step-by-step procedure: `docs/LAB_RUNBOOK.md`; fixture capture: `scripts/capture_fixtures.sh`.
 
 - [ ] OpenClaw installed and gateway running (`openclaw gateway status`).
 - [ ] DefenseClaw installed (`defenseclaw quickstart`), `defenseclaw doctor` clean.

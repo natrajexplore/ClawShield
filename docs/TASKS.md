@@ -11,7 +11,10 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 
 - [x] OpenClaw installed and gateway running (`openclaw gateway status`).
       2026.7.35 (2026.9.8 never loads the DefenseClaw plugin; ADR 0002, LAB_RUNBOOK step 3).
-- [ ] DefenseClaw installed (`defenseclaw quickstart`), `defenseclaw doctor` clean.
+- [x] DefenseClaw installed (`defenseclaw quickstart`), `defenseclaw doctor` clean.
+      0.8.10 via `install.sh --connector openclaw` + `init`. Its doctor stays red on the unused
+      judge key (`DEFENSECLAW_LLM_KEY`) and is not proof anyway; `clawshield doctor` (in-path
+      probe) is the acceptance check.
 - [x] Guardrail in observe mode for the OpenClaw connector:
       `defenseclaw setup guardrail --non-interactive --connector openclaw --mode observe --scanner-mode local --restart`
 - [x] Demo HelpDesk agent configured with a system prompt containing canary `CANARY-7F3A`.
@@ -22,6 +25,9 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       0.8.10 has no `alerts --json`; captured `audit.db` `audit_events` instead (ADR 0001).
 
 **Done when:** fixtures committed and `scripts/bootstrap.sh` documents every step.
+Done 2026-10-07: fixtures committed; `scripts/bootstrap.sh` checks the pinned versions
+(OpenClaw 2026.7.x, DefenseClaw 0.8.10 in sync), gateway RPC, sets observe mode, checks the
+interceptor log line and ends with `clawshield doctor`; installs are in LAB_RUNBOOK.md.
 
 ## M1 — Skeleton + spikes
 - [x] `uv` project, Typer CLI with `doctor`, `run`, `score`, `gate`, `ingest` stubs.

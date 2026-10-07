@@ -29,6 +29,20 @@ and pin the version you test with in `config/clawshield.yaml` (`defenseclaw.expe
   detection `regex_judge` with judge disabled. Doctor then **crashes** (FileNotFoundError on
   `~/.defenseclaw/config.yaml`) in its observability section - a DefenseClaw bug; run `init` first.
 
+## Health commands used by `clawshield doctor`, verified 2026-10-07 (0.8.10)
+- `defenseclaw version --json [--no-drift-exit]`: `{components: [{name, version, origin, detail,
+  status}], drift: [], ok}`; components `cli`, `gateway`, `plugin`. Without `--no-drift-exit`
+  it exits non-zero on drift.
+- `defenseclaw doctor --json-output` (not `--json`): `{passed, failed, warned, skipped,
+  checks: [{status: pass|fail|warn|skip, label, detail}]}`; exit 0 all pass, 1 any failure.
+  With regex-only detection it still FAILs `LLM API key` / `credential DEFENSECLAW_LLM_KEY`
+  (judge key unset), and it passed 33 checks on OpenClaw 2026.9.8 while nothing was inspected.
+- `defenseclaw status --json`: `sidecar.running`, `connectors[] {name, mode, enabled, fail_mode}`,
+  `audit_db` path.
+- `openclaw gateway status --json` (OpenClaw): `rpc.ok`, `rpc.version`, `service.runtime.status`.
+  Fixtures: `tests/fixtures/defenseclaw/{version,doctor,status}.json`,
+  `tests/fixtures/openclaw/gateway_status.json`.
+
 ## Verdict data on the guarded path, verified 2026-10-07 (fixtures: `tests/fixtures/defenseclaw/`)
 - **Where verdicts live:** `~/.defenseclaw/audit.db` (SQLite, 29 tables), table `audit_events`.
   Read it read-only (`file:...?mode=ro`); the database runs in WAL mode. ClawShield's reader: ADR 0001. Useful columns: `id`, `timestamp`, `action` (event

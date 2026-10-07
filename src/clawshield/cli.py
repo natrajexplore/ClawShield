@@ -20,6 +20,8 @@ from clawshield.config import DEFAULT_CONFIG_PATH, ConfigError, Settings, load_s
 from clawshield.core.gate import GateReport
 from clawshield.core.models import DeclaredConfig
 from clawshield.core.score import Interval, SliceScore
+from clawshield.doctor import exit_code as doctor_exit_code
+from clawshield.doctor import run_doctor
 from clawshield.redteam.corpus import CorpusError, load_corpus
 from clawshield.redteam.promptfoo import (
     PromptfooImportError,
@@ -48,7 +50,6 @@ from clawshield.tuner.recommend import Recommendation, recommend_suppressions
 from clawshield.tuner.strategy import recommend_config
 
 EXIT_ERROR = 1
-EXIT_NOT_IMPLEMENTED = 2
 EXIT_GATE_NOT_PASSED = 3
 MAX_NOTES_CHARS = 1000
 
@@ -90,11 +91,6 @@ app = typer.Typer(
 )
 
 
-def _not_implemented(command: str, milestone: str) -> NoReturn:
-    typer.echo(f"clawshield {command}: not implemented yet ({milestone}).", err=True)
-    raise typer.Exit(code=EXIT_NOT_IMPLEMENTED)
-
-
 def _version_callback(value: bool) -> None:
     if value:
         typer.echo(f"clawshield {__version__}")
@@ -117,9 +113,32 @@ def main(
 
 
 @app.command()
-def doctor() -> None:
-    """Check DefenseClaw health, guardrail posture and target reachability (FR-1)."""
-    _not_implemented("doctor", "M1")
+def doctor(
+    no_probe: Annotated[
+        bool,
+        typer.Option(
+            "--no-probe",
+            help="Skip the in-path probe (one known-bad model call). Exits 3: not verified.",
+        ),
+    ] = False,
+    config: ConfigOption = DEFAULT_CONFIG_PATH,
+) -> None:
+    """Check DefenseClaw health and prove the guardrail inspects the target (FR-1).
+
+    Exit 0 only when every check passes (warnings allowed); 1 on any failure; 3 when
+    nothing failed but a check was skipped, so the setup is not verified.
+    """
+    try:
+        settings = load_settings(config)
+    except ConfigError as exc:
+        _fail(str(exc))
+    checks = run_doctor(settings, probe=not no_probe)
+    for c in checks:
+        typer.echo(f"  [{c.status.upper():4}] {c.name:<20} {printable(c.detail)}")
+    code = doctor_exit_code(checks)
+    verdict = {0: "VERIFIED", 1: "FAILED", 3: "NOT VERIFIED"}[code]
+    typer.echo(f"doctor: {verdict}", err=code != 0)
+    raise typer.Exit(code=code)
 
 
 @app.command()

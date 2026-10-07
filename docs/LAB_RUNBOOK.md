@@ -104,10 +104,11 @@ Settings verified on 2026.7.35 (ADR 0002):
 
 ## 6. Send ten hand-made messages and capture fixtures
 
-**Mandatory in-path probe (before any measurement counts).** Send the known-bad case `d-001`
-alone and require, in `~/.defenseclaw/audit.db` `audit_events`, at least one
+**Mandatory in-path probe (before any measurement counts):** `uv run clawshield doctor` must
+print `doctor: VERIFIED` (exit 0). Its probe sends the `d-001` text and requires, in `~/.defenseclaw/audit.db` `audit_events`, at least one
 `event_name = 'finding.observed'` row with `severity = 'CRITICAL'` whose `session_id` is
-`agent:helpdesk:explicit:<the session id you sent, lowercased>`. No finding means the guardrail is
+`agent:helpdesk:explicit:clawshield-doctor-<id>-probe` (manual equivalent: send `d-001` yourself
+and look for that row with your own session id). No finding means the guardrail is
 **not in the path**: stop. Every result from that setup is void, however healthy `doctor`,
 `status` and `alerts` look. Re-run the probe after any OpenClaw or DefenseClaw upgrade.
 

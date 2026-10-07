@@ -46,7 +46,7 @@ class TargetClient(Protocol):
     def send(self, case: Case) -> TargetResult: ...
 
 
-def build_target(settings: Settings) -> TargetClient:
+def build_target(settings: Settings, *, session_prefix: str | None = None) -> TargetClient:
     """Create the configured target. Re-checks the allowlist before any request (NFR-2)."""
     target = settings.target
     if not settings.targets.allows(target):
@@ -54,7 +54,7 @@ def build_target(settings: Settings) -> TargetClient:
     if target.kind == "mock":
         from clawshield.targets.mock import MockTarget
 
-        return MockTarget(name=target.name)
+        return MockTarget(name=target.name, session_prefix=session_prefix)
     if target.kind == "openclaw":
         from clawshield.targets.openclaw import OpenClawTarget
 
@@ -62,6 +62,7 @@ def build_target(settings: Settings) -> TargetClient:
             raise TargetError("target.agent is required for kind openclaw")
 
         return OpenClawTarget(
-            target.name, agent=target.agent, binary=target.binary, timeout_s=target.timeout_s
-        )
+            target.name, agent=target.agent, binary=target.binary, timeout_s=target.timeout_s,
+            session_prefix=session_prefix,
+        )  # fmt: skip
     raise TargetError(f"target kind {target.kind!r} is not implemented yet (ADR 0002, M2)")

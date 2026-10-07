@@ -27,9 +27,16 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 - [x] `uv` project, Typer CLI with `doctor`, `run`, `score`, `gate`, `ingest` stubs.
 - [x] `config.py` loads `config/clawshield.yaml`; validates allowlist and thresholds (pydantic).
 - [x] `shell.run()` wrapper with timeout and no `shell=True`; unit tests.
-- [ ] Spike + ADR 0002: how to send a message to OpenClaw programmatically.
-- [ ] Spike + ADR 0001: alert JSON fields available; document mapping to `Verdict`.
-- [ ] `clawshield doctor` implements FR-1.
+- [x] Spike + ADR 0002: how to send a message to OpenClaw programmatically.
+- [x] Spike + ADR 0001: alert JSON fields available; document mapping to `Verdict`.
+      No `alerts --json` in 0.8.10; ADR 0001 maps `audit.db` findings to `Verdict`.
+- [x] `clawshield doctor` implements FR-1.
+      Checks DefenseClaw version sync + pin, connector enabled/mode + sidecar (`status --json`),
+      DefenseClaw's own doctor (failures are warnings: it passed while the guardrail saw nothing,
+      and fails on an unused judge key), audit.db schema, OpenClaw gateway RPC, and an in-path
+      probe (d-001 text through the real target; requires a block-severity finding in its
+      session). Exit 0 verified / 1 failed / 3 not verified (`--no-probe`, mock target).
+      Lab: VERIFIED in 16 s (4 CRITICAL probe findings); probe findings are skipped by ingest.
 
 **Done when:** `uv run clawshield doctor` prints a green/red table against the lab.
 

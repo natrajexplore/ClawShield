@@ -1,0 +1,238 @@
+{
+  "passed": 35,
+  "failed": 2,
+  "warned": 1,
+  "skipped": 8,
+  "checks": [
+    {
+      "status": "pass",
+      "label": "Config file",
+      "detail": "/home/clawlab/.defenseclaw/config.yaml"
+    },
+    {
+      "status": "pass",
+      "label": "Audit database",
+      "detail": "/home/clawlab/.defenseclaw/audit.db"
+    },
+    {
+      "status": "pass",
+      "label": "Connector [openclaw]",
+      "detail": "OpenClaw"
+    },
+    {
+      "status": "pass",
+      "label": "Mode [openclaw]",
+      "detail": "observe; fail-mode=open; provenance=config"
+    },
+    {
+      "status": "pass",
+      "label": "Connector scope [openclaw]",
+      "detail": "global user config"
+    },
+    {
+      "status": "pass",
+      "label": "Skill paths [openclaw]",
+      "detail": "2/2 present \u2014 /home/clawlab/.openclaw/workspace/skills, /home/clawlab/.openclaw/skills"
+    },
+    {
+      "status": "pass",
+      "label": "Plugin paths [openclaw]",
+      "detail": "1/1 present \u2014 /home/clawlab/.openclaw/extensions"
+    },
+    {
+      "status": "skip",
+      "label": "MCP servers [openclaw]",
+      "detail": "no MCP servers registered"
+    },
+    {
+      "status": "pass",
+      "label": "Rule pack [openclaw]",
+      "detail": "/home/clawlab/.defenseclaw/policies/guardrail/default (configured rule_pack_dir)"
+    },
+    {
+      "status": "pass",
+      "label": "Detection [openclaw]",
+      "detail": "strategy=regex_judge; judge disabled (regex/Cisco-AID lanes only)"
+    },
+    {
+      "status": "skip",
+      "label": "Hook contract [openclaw]",
+      "detail": "openclaw uses proxy/chat surfaces"
+    },
+    {
+      "status": "pass",
+      "label": "Connector residue",
+      "detail": "no leftover artifacts from inactive connectors"
+    },
+    {
+      "status": "pass",
+      "label": "Plugin registry policy",
+      "detail": "no dead-end plugin.registry_required flag set"
+    },
+    {
+      "status": "pass",
+      "label": "Scanner: skill-scanner",
+      "detail": "/home/clawlab/.defenseclaw/.venv/bin/skill-scanner"
+    },
+    {
+      "status": "pass",
+      "label": "Scanner: mcp-scanner",
+      "detail": "/home/clawlab/.defenseclaw/.venv/bin/mcp-scanner"
+    },
+    {
+      "status": "pass",
+      "label": "Scanner coverage (plugin)",
+      "detail": "malicious code patterns; prompt injection attempts; hardcoded secrets; supply-chain risk indicators"
+    },
+    {
+      "status": "pass",
+      "label": "Scanner coverage (skill)",
+      "detail": "prompt injection in SKILL.md; malicious shell / Python invocations; untrusted bundled bins; policy violations"
+    },
+    {
+      "status": "pass",
+      "label": "Scanner coverage (MCP server)",
+      "detail": "untrusted command paths; outbound URL allow-listing; tool-name spoofing; auth-token handling"
+    },
+    {
+      "status": "pass",
+      "label": "Sidecar API",
+      "detail": "127.0.0.1:18970"
+    },
+    {
+      "status": "pass",
+      "label": "  \u2514\u2500 gateway",
+      "detail": "running"
+    },
+    {
+      "status": "pass",
+      "label": "  \u2514\u2500 watcher",
+      "detail": "running"
+    },
+    {
+      "status": "pass",
+      "label": "  \u2514\u2500 guardrail",
+      "detail": "running (mode=observe)"
+    },
+    {
+      "status": "pass",
+      "label": "  \u2514\u2500 api",
+      "detail": "running"
+    },
+    {
+      "status": "pass",
+      "label": "  \u2514\u2500 telemetry",
+      "detail": "running"
+    },
+    {
+      "status": "pass",
+      "label": "Gateway token env",
+      "detail": "OPENCLAW_GATEWAY_TOKEN is set"
+    },
+    {
+      "status": "pass",
+      "label": "Gateway token drift",
+      "detail": "sidecar (pid 50337) token matches ~/.defenseclaw/.env"
+    },
+    {
+      "status": "pass",
+      "label": "Gateway home",
+      "detail": "sidecar on :18970 belongs to this config (/home/clawlab/.defenseclaw)"
+    },
+    {
+      "status": "pass",
+      "label": "OpenClaw gateway",
+      "detail": "127.0.0.1:18789"
+    },
+    {
+      "status": "pass",
+      "label": "Human approval",
+      "detail": "disabled (default)"
+    },
+    {
+      "status": "warn",
+      "label": "Guardrail proxy",
+      "detail": "guardrail.model is empty \u2014 relying on fetch-interceptor routing"
+    },
+    {
+      "status": "pass",
+      "label": "Guardrail proxy",
+      "detail": "healthy on port 4000"
+    },
+    {
+      "status": "fail",
+      "label": "LLM API key",
+      "detail": "DEFENSECLAW_LLM_KEY not set (checked env + /home/clawlab/.defenseclaw/.env)"
+    },
+    {
+      "status": "skip",
+      "label": "LLM reachable",
+      "detail": "no model configured"
+    },
+    {
+      "status": "skip",
+      "label": "Regional provider",
+      "detail": "no regional provider in use"
+    },
+    {
+      "status": "skip",
+      "label": "Custom-provider overlay",
+      "detail": "no overlay configured"
+    },
+    {
+      "status": "skip",
+      "label": "Cisco AI Defense",
+      "detail": "not configured for remote scanning"
+    },
+    {
+      "status": "skip",
+      "label": "VirusTotal API",
+      "detail": "not enabled"
+    },
+    {
+      "status": "fail",
+      "label": "credential DEFENSECLAW_LLM_KEY",
+      "detail": "required by llm.default \u2014 set with 'defenseclaw keys set DEFENSECLAW_LLM_KEY'"
+    },
+    {
+      "status": "pass",
+      "label": "Local SQLite",
+      "detail": "retention=90 days; path=/home/clawlab/.defenseclaw/audit.db"
+    },
+    {
+      "status": "pass",
+      "label": "Judge-body store",
+      "detail": "capture=enabled; retention=90 days; path=/home/clawlab/.defenseclaw/judge_bodies.db"
+    },
+    {
+      "status": "pass",
+      "label": "Destination: local-sqlite",
+      "detail": "kind=sqlite; signals=logs; policy=implicit_local; buckets=14; redaction=unredacted (none); limits=not-applicable; target=/home/clawlab/.defenseclaw/audit.db; health=healthy/activated; queue=0 dropped; last=unavailable"
+    },
+    {
+      "status": "pass",
+      "label": "Retention controller",
+      "detail": "healthy"
+    },
+    {
+      "status": "pass",
+      "label": "Bucket catalog",
+      "detail": "version=1; collected=14/14"
+    },
+    {
+      "status": "pass",
+      "label": "Connector OTLP: openclaw",
+      "detail": "custody=hook_only; no native exporter is expected; correlation remains active on hook telemetry"
+    },
+    {
+      "status": "skip",
+      "label": "Webhooks",
+      "detail": "no webhooks configured"
+    },
+    {
+      "status": "pass",
+      "label": "Security overrides",
+      "detail": "none active"
+    }
+  ]
+}

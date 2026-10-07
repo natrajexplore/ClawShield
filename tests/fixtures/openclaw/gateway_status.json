@@ -1,0 +1,128 @@
+{
+  "cli": {
+    "version": "2026.7.35",
+    "entrypoint": "/home/clawlab/.npm-global/bin/openclaw"
+  },
+  "logFile": "/tmp/openclaw-1002/openclaw-2026-10-07.log",
+  "service": {
+    "label": "systemd user",
+    "loaded": true,
+    "loadedText": "enabled",
+    "notLoadedText": "disabled",
+    "command": {
+      "programArguments": [
+        "/usr/bin/node",
+        "/home/clawlab/.npm-global/lib/node_modules/openclaw/dist/index.js",
+        "gateway",
+        "--port",
+        "18789"
+      ],
+      "environment": {
+        "OPENCLAW_GATEWAY_PORT": "18789"
+      },
+      "environmentValueSources": {
+        "HOME": "inline",
+        "TMPDIR": "inline",
+        "PATH": "inline",
+        "OPENCLAW_GATEWAY_PORT": "inline",
+        "OPENCLAW_SYSTEMD_UNIT": "inline",
+        "OPENCLAW_WINDOWS_TASK_NAME": "inline",
+        "OPENCLAW_WINDOWS_TASK_HIDDEN_LAUNCHER": "inline",
+        "OPENCLAW_SERVICE_MARKER": "inline",
+        "OPENCLAW_SERVICE_KIND": "inline",
+        "OPENCLAW_SERVICE_VERSION": "inline"
+      },
+      "sourcePath": "/home/clawlab/.config/systemd/user/openclaw-gateway.service"
+    },
+    "runtime": {
+      "status": "running",
+      "state": "active",
+      "subState": "running",
+      "pid": 52820,
+      "lastExitStatus": 0,
+      "lastExitReason": "0",
+      "systemd": {
+        "unit": "openclaw-gateway.service",
+        "killMode": "control-group",
+        "tasksCurrent": 12,
+        "memoryCurrent": 328376320,
+        "result": "success",
+        "nRestarts": 1,
+        "startLimitBurst": 5
+      }
+    },
+    "configAudit": {
+      "ok": true,
+      "issues": []
+    }
+  },
+  "config": {
+    "cli": {
+      "path": "/home/clawlab/.openclaw/openclaw.json",
+      "exists": true,
+      "valid": true
+    },
+    "daemon": {
+      "path": "/home/clawlab/.openclaw/openclaw.json",
+      "exists": true,
+      "valid": true
+    }
+  },
+  "gateway": {
+    "bindMode": "loopback",
+    "bindHost": "127.0.0.1",
+    "port": 18789,
+    "portSource": "service args",
+    "probeUrl": "ws://127.0.0.1:18789",
+    "controlUiLinks": {
+      "httpUrl": "http://127.0.0.1:18789/",
+      "wsUrl": "ws://127.0.0.1:18789"
+    },
+    "probeNote": "Loopback-only gateway; only local clients can connect.",
+    "version": "2026.7.35"
+  },
+  "port": {
+    "port": 18789,
+    "status": "busy",
+    "listeners": [
+      {
+        "pid": 52820,
+        "command": "MainThread",
+        "address": "127.0.0.1:18789",
+        "commandLine": "/usr/bin/node /home/clawlab/.npm-global/lib/node_modules/openclaw/dist/index.js gateway --port 18789",
+        "user": "clawlab",
+        "ppid": 20826
+      },
+      {
+        "pid": 52820,
+        "command": "MainThread",
+        "address": "[::1]:18789",
+        "commandLine": "/usr/bin/node /home/clawlab/.npm-global/lib/node_modules/openclaw/dist/index.js gateway --port 18789",
+        "user": "clawlab",
+        "ppid": 20826
+      }
+    ],
+    "hints": []
+  },
+  "rpc": {
+    "ok": true,
+    "kind": "connect",
+    "capability": "connected_no_operator_scope",
+    "auth": {
+      "role": "operator",
+      "scopes": [],
+      "capability": "connected_no_operator_scope"
+    },
+    "server": {
+      "version": "2026.7.35",
+      "connId": "36be871a-a8a9-4acd-8ed6-ec1dde292b66"
+    },
+    "version": "2026.7.35",
+    "url": "ws://127.0.0.1:18789"
+  },
+  "extraServices": [],
+  "pluginVersionDrift": {
+    "gatewayVersion": "2026.7.35",
+    "drifts": []
+  }
+}

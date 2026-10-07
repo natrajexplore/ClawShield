@@ -28,6 +28,8 @@ REQUIRED_COLUMNS = frozenset(
      "enforced", "structured_json"}
 )  # fmt: skip
 MAX_ROWS = 200_000
+# Sessions of `clawshield doctor` in-path probes: kept out of run ingests (they belong to no case).
+PROBE_SESSION_PREFIX = "clawshield-doctor-"
 BUSY_TIMEOUT_S = 5.0
 
 _DIRECTIONS = frozenset(get_args(Direction)) - {"unknown"}
@@ -47,9 +49,10 @@ class AuditDbBatch:
 class AuditDbSource:
     name = SOURCE
 
-    def __init__(self, path: Path, *, connector: str) -> None:
+    def __init__(self, path: Path, *, connector: str, include_probes: bool = False) -> None:
         self.path = path.expanduser()
         self.connector = connector
+        self.include_probes = include_probes
 
     def fetch(self, since: datetime) -> list[Verdict]:
         return self.read(since).verdicts
@@ -117,6 +120,8 @@ class AuditDbSource:
         scanner = str(finding.get("defenseclaw.scan.scanner") or "none")
         if scanner not in GUARDRAIL_SCANNERS:
             return None, f"scanner {scanner}"
+        if not self.include_probes and f":explicit:{PROBE_SESSION_PREFIX}" in str(session_id):
+            return None, "clawshield doctor probe"
         if enforced is not None:
             return None, "enforced set (action-mode rows unverified, ADR 0001)"
         severity_text = str(finding.get("defenseclaw.security.severity") or col_severity or "")

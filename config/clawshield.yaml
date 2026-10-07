@@ -3,7 +3,7 @@
 defenseclaw:
   binary: defenseclaw
   connector: openclaw
-  expected_version: ""        # pin after M0, e.g. "1.0.x"
+  expected_version: "0.8.10"  # verified in M0 (exact, or a prefix pattern like "0.8.x")
   command_timeout_s: 30
   audit_db: ~/.defenseclaw/audit.db   # verdicts, opened read-only (ADR 0001)
 

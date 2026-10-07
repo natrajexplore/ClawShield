@@ -1,0 +1,27 @@
+{
+  "components": [
+    {
+      "name": "cli",
+      "version": "0.8.10",
+      "origin": "defenseclaw (python)",
+      "detail": "",
+      "status": "ok"
+    },
+    {
+      "name": "gateway",
+      "version": "0.8.10",
+      "origin": "/home/clawlab/.local/bin/defenseclaw-gateway",
+      "detail": "(commit=bf45995c7fa691f34ffa89b6f0468c93a6207dea, built=2026-07-29T23:23:27Z)",
+      "status": "ok"
+    },
+    {
+      "name": "plugin",
+      "version": "0.8.10",
+      "origin": "/home/clawlab/.openclaw/extensions/defenseclaw",
+      "detail": "",
+      "status": "ok"
+    }
+  ],
+  "drift": [],
+  "ok": true
+}

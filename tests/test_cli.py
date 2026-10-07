@@ -6,7 +6,7 @@ import yaml
 from typer.testing import CliRunner
 
 from clawshield import __version__, cli
-from clawshield.cli import EXIT_ERROR, EXIT_NOT_IMPLEMENTED, app, printable
+from clawshield.cli import EXIT_ERROR, app, printable
 from clawshield.storage.db import Store
 from tests.conftest import db_bytes
 
@@ -15,8 +15,7 @@ runner = CliRunner()
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SEED = REPO_ROOT / "redteam" / "corpus" / "seed.jsonl"
 SEED_CASES = sum(1 for line in SEED.read_text(encoding="ascii").splitlines() if line.strip())
-STUB_COMMANDS = ["doctor"]
-ALL_COMMANDS = [*STUB_COMMANDS, "ingest", "run", "runs", "score", "gate", "compare", "tune"]
+ALL_COMMANDS = ["doctor", "ingest", "run", "runs", "score", "gate", "compare", "tune"]
 
 
 def test_help_lists_all_commands() -> None:
@@ -30,13 +29,6 @@ def test_version() -> None:
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
     assert __version__ in result.output
-
-
-@pytest.mark.parametrize("command", STUB_COMMANDS)
-def test_stubs_fail_closed(command: str) -> None:
-    result = runner.invoke(app, [command])
-    assert result.exit_code == EXIT_NOT_IMPLEMENTED
-    assert "not implemented" in result.output
 
 
 def test_documented_options_parse() -> None:

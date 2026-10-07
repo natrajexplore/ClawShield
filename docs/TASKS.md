@@ -123,9 +123,15 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 **Done when:** the full story (baseline → tune → pass gate) is visible without the CLI.
 
 ## M7 — Continuous regression + CI
-- [ ] `clawshield run --ci` exit codes (FR-21).
-- [ ] GitHub Actions workflow running against `mock` target + fixtures on every PR.
-- [ ] Nightly scheduled lab run; Slack alert on regression (FR-20).
+- [x] `clawshield run --ci` exit codes (FR-21).
+      `run --ci` / `clawshield check`: accuracy criteria (gate logic) + regression vs the last
+      passing run on the same corpus; exit 0 or 3. Fails closed until verdict ingest exists.
+- [x] GitHub Actions workflow running against `mock` target + fixtures on every PR.
+      .github/workflows/ci.yml: ubuntu + windows x py3.11/3.13; ruff, format, mypy, bandit,
+      pip-audit, pytest (coverage >= 95%); SHA-pinned actions, read-only token.
+- [x] Nightly scheduled lab run; Slack alert on regression (FR-20).
+      scripts/nightly.sh for cron/systemd on the lab host; `--notify` posts to Slack only on
+      failure; webhook must be https://hooks.slack.com/services/..., never logged.
 - [ ] Optional `/metrics` endpoint + Grafana dashboard JSON in `deploy/grafana/`.
 
 ## M8 — Demo + write-up

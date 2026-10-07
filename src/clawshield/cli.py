@@ -14,7 +14,8 @@ from typing import Annotated, NoReturn
 import typer
 
 from clawshield import __version__
-from clawshield.config import DEFAULT_CONFIG_PATH, ConfigError, load_settings
+from clawshield.alerts.slack import NotifyError, send_slack
+from clawshield.config import DEFAULT_CONFIG_PATH, ConfigError, Settings, load_settings
 from clawshield.core.gate import GateReport
 from clawshield.core.models import DeclaredConfig
 from clawshield.core.score import Interval, SliceScore
@@ -30,6 +31,8 @@ from clawshield.scoring import (
     RunComparison,
     RunScore,
     ScoringError,
+    check_message,
+    check_run,
     compare_runs,
     comparison_to_dict,
     gate_run,
@@ -133,8 +136,15 @@ def run(
         StrategyChoice | None,
         typer.Option("--detection-strategy", help="Declare the active detection strategy."),
     ] = None,
+    ci: Annotated[
+        bool,
+        typer.Option("--ci", help="After the run, check accuracy + regression; exit 3 on failure."),
+    ] = False,
+    notify: Annotated[bool, typer.Option(help="With --ci: Slack alert on failure.")] = False,
 ) -> None:
-    """Replay the attack corpus against the allowlisted target (FR-4)."""
+    """Replay the attack corpus against the allowlisted target (FR-4, FR-21 with --ci)."""
+    if notify and not ci:
+        _fail("--notify requires --ci")
     if (rule_pack is None) != (strategy is None):
         _fail("declare both --rule-pack and --detection-strategy, or neither")
     declared = (
@@ -176,6 +186,46 @@ def run(
     )
     if report.leaks:
         typer.echo(f"warning: {report.leaks} response(s) leaked a planted canary", err=True)
+    if ci:
+        _check_and_exit(store, settings, report.run_id, notify=notify)
+
+
+def _check_and_exit(store: Store, settings: Settings, run_id: str, *, notify: bool) -> NoReturn:
+    """Shared by `run --ci` and `check`: print, alert on failure if asked, exit 0 or 3."""
+    try:
+        result = check_run(store, settings, run_id)
+    except RunNotFoundError:
+        _fail(f"run {run_id!r} not found")
+    except (CorpusError, ScoringError, StoreSchemaError) as exc:
+        _fail(str(exc))
+    message = check_message(result)
+    for line in message.splitlines():
+        typer.echo(printable(line))
+    if result.ok:
+        raise typer.Exit(code=0)
+    if notify:
+        try:
+            send_slack(settings.alerts.slack_webhook_env, message)
+            typer.echo("alert sent to Slack", err=True)
+        except NotifyError as exc:
+            typer.echo(f"error: alert not sent: {exc}", err=True)
+    raise typer.Exit(code=EXIT_GATE_NOT_PASSED)
+
+
+@app.command()
+def check(
+    run_id: Annotated[str, typer.Option("--run", help="Run id, or 'latest'.")] = "latest",
+    config: ConfigOption = DEFAULT_CONFIG_PATH,
+    notify: Annotated[bool, typer.Option(help="Slack alert on failure (FR-20).")] = False,
+) -> None:
+    """CI/nightly check: accuracy criteria + regression vs last passing run (FR-20, FR-21)."""
+    try:
+        settings = load_settings(config)
+    except ConfigError as exc:
+        _fail(str(exc))
+    if not settings.storage.db_path.exists():
+        _fail("no runs yet; run `clawshield run` first")
+    _check_and_exit(Store(settings.storage.db_path), settings, run_id, notify=notify)
 
 
 @app.command()

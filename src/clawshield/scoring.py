@@ -13,10 +13,17 @@ from typing import Any
 from clawshield.config import Settings
 from clawshield.core.compare import Comparison, PairedTest, compare
 from clawshield.core.correlate import DEFAULT_PRE_S, CorrelationReport, correlate
-from clawshield.core.gate import GateEvidence, GateReport, GateThresholds, evaluate_gate
+from clawshield.core.gate import (
+    Criterion,
+    GateEvidence,
+    GateReport,
+    GateThresholds,
+    evaluate_gate,
+)
 from clawshield.core.models import Category, DeclaredConfig, Verdict
+from clawshield.core.regression import RegressionResult, detect_regression
 from clawshield.core.score import CaseInput, Interval, Scorecard, SliceScore, score
-from clawshield.redteam.corpus import load_corpus
+from clawshield.redteam.corpus import CorpusError, load_corpus
 from clawshield.storage.db import RunRow, Store
 
 
@@ -244,3 +251,59 @@ def gate_run(
         categories=[c.value for c in Category],
     )
     return rs, report
+
+
+ACCURACY_CRITERIA = ("evidence_quality", "critical_recall", "benign_block_fpr", "canary_leaks")
+
+
+@dataclass(frozen=True)
+class CheckResult:
+    run_id: str
+    accuracy: tuple[Criterion, ...]
+    regression: RegressionResult
+
+    @property
+    def accuracy_passed(self) -> bool:
+        return all(c.status == "PASS" for c in self.accuracy)
+
+    @property
+    def ok(self) -> bool:
+        return self.accuracy_passed and not self.regression.regressed
+
+
+def _accuracy(report: GateReport) -> tuple[Criterion, ...]:
+    return tuple(c for c in report.criteria if c.name in ACCURACY_CRITERIA)
+
+
+def check_run(store: Store, settings: Settings, run_id: str) -> CheckResult:
+    """CI / nightly check (FR-20, FR-21): accuracy criteria + regression vs last passing run."""
+    rs, report = gate_run(store, settings, run_id)
+    baseline: RunScore | None = None
+    for candidate in store.earlier_runs(rs.run.started_at, rs.run.corpus_hash):
+        try:
+            cand_rs, cand_report = gate_run(store, settings, candidate.id)
+        except (ScoringError, CorpusError):
+            continue
+        if all(c.status == "PASS" for c in _accuracy(cand_report)):
+            baseline = cand_rs
+            break
+    regression = detect_regression(
+        rs.card.overall, baseline.card.overall if baseline else None,
+        baseline.run.id if baseline else None,
+        max_recall_drop=settings.regression.max_recall_drop,
+        max_fpr_rise=settings.regression.max_fpr_rise,
+    )  # fmt: skip
+    return CheckResult(run_id=rs.run.id, accuracy=_accuracy(report), regression=regression)
+
+
+def check_message(result: CheckResult) -> str:
+    """Alert text: run id, criteria and deltas only (no prompt/response/canary text)."""
+    lines = [f"ClawShield check {'OK' if result.ok else 'FAILED'} for run {result.run_id}"]
+    lines += [f"- {c.status}: {c.name} ({c.observed})" for c in result.accuracy]
+    reg = result.regression
+    if reg.baseline_run_id:
+        lines.append(f"- regression vs {reg.baseline_run_id}: {'YES' if reg.regressed else 'no'}")
+        lines += [f"  - {r}" for r in reg.reasons]
+    else:
+        lines.append("- regression: no earlier passing run to compare")
+    return chr(10).join(lines)  # newline-separated Slack text

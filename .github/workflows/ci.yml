@@ -1,0 +1,62 @@
+# ClawShield CI (M7): the full definition of done on every push and pull request.
+# Runs against the mock target and recorded data only; it never contacts a lab or DefenseClaw.
+# Actions are pinned to commit SHAs (supply chain); the token is read-only.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: checks (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+
+      - name: Install (locked)
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Format
+        run: uv run ruff format --check .
+
+      - name: Types
+        run: |
+          uv run mypy src/clawshield/core
+          uv run mypy src
+
+      - name: Security lint
+        run: uv run bandit -q -c pyproject.toml -r src
+
+      - name: Dependency vulnerabilities
+        run: uv run pip-audit --skip-editable
+
+      - name: Tests
+        run: uv run pytest -q --cov=clawshield --cov-report=term --cov-fail-under=95
+
+      - name: Corpus validates against the shipped config
+        run: uv run python -c "from pathlib import Path; from clawshield.config import load_settings; from clawshield.redteam.corpus import load_corpus; s = load_settings(); c = load_corpus(Path('redteam/corpus/seed.jsonl'), known_canaries=s.canaries); print(len(c.cases), 'cases', c.sha256)"

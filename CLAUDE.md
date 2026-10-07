@@ -71,6 +71,7 @@ uv run clawshield tune --run latest       # noisy-rule recommendations (never ex
 uv run clawshield recommend-config <A> <B> # rule pack / strategy from an A/B pair
 uv run clawshield gate                   # exit 0 only on PASS; FAIL/UNVERIFIED exit 3
 uv run clawshield gate --export reports/ # evidence pack (.json + .md) for CAB review
+uv run clawshield check --notify         # CI/nightly: accuracy + regression, Slack on failure
 uv run clawshield console                # http://127.0.0.1:8088, read-only
 ```
 

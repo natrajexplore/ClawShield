@@ -262,6 +262,21 @@ class Store:
             raise RunNotFoundError(run_id)
         return run
 
+    def earlier_runs(self, before: datetime, corpus_hash: str, limit: int = 50) -> list[RunRow]:
+        """Complete runs on the same corpus that started before `before`, newest first."""
+        with Session(self.engine) as session:
+            stmt = (
+                select(RunRow)
+                .where(
+                    col(RunRow.started_at) < before,
+                    RunRow.corpus_hash == corpus_hash,
+                    col(RunRow.finished_at).is_not(None),
+                )
+                .order_by(col(RunRow.started_at).desc())
+                .limit(limit)
+            )
+            return list(session.exec(stmt).all())
+
     def first_snapshot_run_start(self) -> datetime | None:
         """Start of the earliest complete run that captured a guardrail snapshot."""
         with Session(self.engine) as session:

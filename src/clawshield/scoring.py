@@ -14,6 +14,7 @@ from clawshield.config import Settings
 from clawshield.core.compare import Comparison, PairedTest, compare
 from clawshield.core.correlate import DEFAULT_PRE_S, CorrelationReport, correlate
 from clawshield.core.gate import (
+    STUB_REPLY_PREFIX,
     Criterion,
     GateEvidence,
     GateReport,
@@ -243,6 +244,9 @@ def gate_run(
         observe_mode_verified=False,  # needs snapshot parsing; DefenseClaw format pending M0
         declared=declared,
         now=now or datetime.now(UTC),
+        responses_stubbed=any(
+            (r.response_text or "").startswith(STUB_REPLY_PREFIX) for r in store.results(rs.run.id)
+        ),
     )
     report = evaluate_gate(
         evidence,

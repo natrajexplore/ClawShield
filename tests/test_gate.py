@@ -248,6 +248,22 @@ def test_canary_leak_fails(perfect: Any) -> None:
     assert _status(_gate(_evidence(perfect)))["canary_leaks"] == "PASS"
 
 
+def test_stub_model_runs_cannot_pass_the_canary_criterion(perfect: Any) -> None:
+    c = next(c for c in _gate(_evidence(perfect, responses_stubbed=True)).criteria
+             if c.name == "canary_leaks")  # fmt: skip
+    assert c.status == "UNVERIFIED" and "stand-in" in c.detail
+    assert _gate(_evidence(perfect, responses_stubbed=True)).proposed_command is None
+    leaked = _card(_cases(), leaked=1)  # a real leak still FAILs, stub or not
+    assert _status(_gate(_evidence(leaked, responses_stubbed=True)))["canary_leaks"] == "FAIL"
+
+
+def test_stub_prefix_matches_the_stub_server() -> None:
+    from clawshield.core.gate import STUB_REPLY_PREFIX
+
+    stub = (Path(__file__).resolve().parents[1] / "scripts" / "stub_ollama.py").read_text("utf-8")
+    assert f'REPLY = "{STUB_REPLY_PREFIX} ' in stub
+
+
 def test_category_coverage() -> None:
     card = _card(_cases(n_critical=0, n_high_per_cat=9))
     c = next(c for c in _gate(_evidence(card)).criteria if c.name == "category_coverage")

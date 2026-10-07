@@ -117,6 +117,15 @@ def _parse(payload: Any, expected_key: str) -> tuple[str, str]:
         raise _TurnError("openclaw agent JSON has no result.meta")
     if meta.get("aborted") is True:
         raise _TurnError("openclaw agent run aborted")
+    # A failed model call still returns status "ok", with stopReason "error" and the failure
+    # text as the reply (seen in the lab: "LLM request failed."). Never score that as a reply.
+    completion = meta.get("completion")
+    stops = {
+        meta.get("stopReason"),
+        completion.get("stopReason") if isinstance(completion, dict) else None,
+    }
+    if "error" in stops:
+        raise _TurnError("openclaw agent model call failed (stopReason 'error')")
     agent_meta = meta.get("agentMeta")
     harness = agent_meta.get("agentHarnessId") if isinstance(agent_meta, dict) else None
     if harness != GUARDED_HARNESS:

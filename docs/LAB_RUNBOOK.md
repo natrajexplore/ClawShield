@@ -162,6 +162,27 @@ uv run clawshield ingest --extra redteam/corpus/public/gandalf_ignore_instructio
 non-allowlisted generators are rejected by design). Review the combined corpus before
 committing it: no real PII or credentials (CLAUDE.md corpus safety).
 
+## 8b. Zero-cost stand-in model (optional)
+
+DefenseClaw scans the prompt when the message enters the session, before the model call, so
+prompt-side detection does not depend on the model. `scripts/stub_ollama.py` (stdlib, loopback
+only, never logs bodies) speaks Ollama's native API on `127.0.0.1:11434` with a fixed reply;
+DefenseClaw's interceptor routes that port through the guardrail like a hosted provider.
+
+```bash
+nohup setsid python3 scripts/stub_ollama.py > logs/stub_ollama.log 2>&1 < /dev/null &
+cp -p ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.bak-$(date -u +%Y%m%dT%H%M%S)
+# models.providers.ollama = {apiKey "ollama-local", baseUrl "http://127.0.0.1:11434",
+#   api "ollama", models [{id "clawshield-stub", contextWindow 131072}]};
+# agents.list[<helpdesk>].model.primary = "ollama/clawshield-stub", pinned to agentRuntime
+# "openclaw". Use `openclaw config set --batch-file ... --dry-run` first. The gateway
+# auto-enables the stock ollama plugin at runtime (plugins.allow stays ['defenseclaw']).
+uv run clawshield doctor          # must still say VERIFIED
+```
+
+**Not measured with the stub:** canary leaks and completion-direction findings. The gate marks
+`canary_leaks` UNVERIFIED for runs answered by the stub, so such a run can never PASS.
+
 ## 9. First baseline run
 
 ```bash

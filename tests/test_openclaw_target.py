@@ -162,6 +162,8 @@ def test_missing_session_key_uses_the_requested_one() -> None:
         (_mutate(["result", "meta", "agentMeta"], _DELETE), "harness 'None'"),
         (_mutate(["status"], "error"), "status 'error'"),
         (_mutate(["result", "meta", "aborted"], True), "run aborted"),
+        (_mutate(["result", "meta", "stopReason"], "error"), "model call failed"),
+        (_mutate(["result", "meta", "completion"], {"stopReason": "error"}), "model call failed"),
         (_mutate(["result", "meta"], _DELETE), "no result.meta"),
         (_mutate(["result", "meta", "systemPromptReport", "sessionKey"], "agent:x:explicit:other"),
          "different session key"),

@@ -18,12 +18,13 @@ from clawshield import __version__
 from clawshield.alerts.slack import NotifyError, send_slack
 from clawshield.config import DEFAULT_CONFIG_PATH, ConfigError, Settings, load_settings
 from clawshield.core.gate import GateReport
-from clawshield.core.models import DeclaredConfig
+from clawshield.core.models import Case, DeclaredConfig
 from clawshield.core.score import Interval, SliceScore
 from clawshield.doctor import exit_code as doctor_exit_code
 from clawshield.doctor import run_doctor
 from clawshield.redteam.corpus import CorpusError, load_corpus
 from clawshield.redteam.promptfoo import (
+    ImportReport,
     PromptfooImportError,
     import_promptfoo,
     write_combined_corpus,
@@ -673,6 +674,10 @@ def console(
     )  # fmt: skip
 
 
+def _norm(text: str) -> str:
+    return " ".join(text.casefold().split())
+
+
 def _ingest_verdicts(config: Path, since_text: str | None) -> None:
     """Read guardrail findings from DefenseClaw's audit.db (ADR 0001) into the store."""
     try:
@@ -724,6 +729,13 @@ def ingest(
     inject_var: Annotated[
         str, typer.Option(help="promptfoo var holding the attack text (redteam injectVar).")
     ] = "prompt",
+    extra: Annotated[
+        list[Path] | None,
+        typer.Option(
+            help="Vendored corpus JSONL to merge (repeatable), e.g. "
+            "redteam/corpus/public/gandalf_ignore_instructions.jsonl."
+        ),
+    ] = None,
     since: Annotated[
         str | None,
         typer.Option(
@@ -733,33 +745,62 @@ def ingest(
     ] = None,
     config: ConfigOption = DEFAULT_CONFIG_PATH,
 ) -> None:
-    """Ingest DefenseClaw verdicts (FR-7), or with --promptfoo import red-team cases (FR-5)."""
-    if promptfoo is None:
+    """Ingest DefenseClaw verdicts (FR-7), or build a combined corpus (FR-5) from the base
+    corpus plus --extra vendored corpora and/or --promptfoo red-team results."""
+    if promptfoo is None and not extra:
         _ingest_verdicts(config, since)
         return
-    if out.resolve() == base.resolve():
-        _fail("--out must differ from --base; the base corpus is never modified")
+    extra = extra or []
+    if any(p.resolve() == out.resolve() for p in [base, *extra]):
+        _fail("--out must differ from --base and --extra; input corpora are never modified")
     try:
         settings = load_settings(config)
         base_corpus = load_corpus(base, known_canaries=settings.canaries)
-        report = import_promptfoo(
-            promptfoo, inject_var=inject_var, existing_texts=(c.text for c in base_corpus.cases)
+        seen_text = {_norm(c.text) for c in base_corpus.cases}
+        seen_ids = {c.id for c in base_corpus.cases}
+        imported: list[Case] = []
+        extra_dupes = 0
+        for path in extra:
+            for case in load_corpus(path, known_canaries=settings.canaries).cases:
+                if case.id in seen_ids:
+                    _fail(f"{path}: case id {case.id!r} already used by another corpus")
+                if _norm(case.text) in seen_text:
+                    extra_dupes += 1
+                    continue
+                seen_ids.add(case.id)
+                seen_text.add(_norm(case.text))
+                imported.append(case)
+        report = (
+            import_promptfoo(
+                promptfoo,
+                inject_var=inject_var,
+                existing_texts=[*(c.text for c in base_corpus.cases), *(c.text for c in imported)],
+            )
+            if promptfoo is not None
+            else ImportReport(cases=())
         )
     except (ConfigError, CorpusError, PromptfooImportError) as exc:
         _fail(str(exc))
-    if not report.cases:
+    if extra:
+        typer.echo(
+            f"extra corpora: {len(imported)} case(s), {extra_dupes} duplicate text(s) skipped"
+        )
+    if promptfoo is not None and not report.cases:
         _fail(f"no importable cases in {promptfoo} (rejected: {dict(report.rejected) or 'none'})")
+    imported.extend(report.cases)
+    if not imported:
+        _fail("nothing to add: every --extra case duplicates the base corpus")
     base_lines = [ln for ln in base.read_text(encoding="utf-8-sig").splitlines() if ln.strip()]
-    added = write_combined_corpus(base_lines, report.cases, out)
+    added = write_combined_corpus(base_lines, imported, out)
     try:
         combined = load_corpus(out, known_canaries=settings.canaries)  # re-validate the result
     except CorpusError as exc:
         out.unlink(missing_ok=True)
         _fail(f"combined corpus failed validation and was removed: {exc}")
-    counts = Counter(c.category.value for c in report.cases)
+    counts = Counter(c.category.value for c in imported)
     typer.echo(f"imported {added} case(s) into {out} ({len(combined.cases)} total)")
     typer.echo("  by category: " + ", ".join(f"{k} {v}" for k, v in sorted(counts.items())))
-    critical = sum(1 for c in report.cases if c.expected_severity.value == "critical")
+    critical = sum(1 for c in imported if c.expected_severity.value == "critical")
     typer.echo(
         f"  critical {critical} | duplicates skipped {report.duplicates} | "
         f"severity defaulted {report.severity_defaulted}"

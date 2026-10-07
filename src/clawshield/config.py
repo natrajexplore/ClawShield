@@ -234,7 +234,7 @@ _UniqueKeyLoader.add_constructor(
 )
 
 
-def _safe_load_unique(text: str) -> object:
+def safe_load_unique(text: str) -> object:
     """Equivalent of `yaml.safe_load` that also rejects duplicate keys."""
     loader = _UniqueKeyLoader(text)
     try:
@@ -265,7 +265,7 @@ def load_settings(path: Path = DEFAULT_CONFIG_PATH) -> Settings:
     except UnicodeDecodeError:
         raise ConfigError(f"config {path} is not valid UTF-8") from None
     try:
-        data = _safe_load_unique(text)
+        data = safe_load_unique(text)
     except yaml.YAMLError as exc:
         raise ConfigError(f"invalid YAML in {path}{_yaml_error_message(exc)}") from None
     if not isinstance(data, dict):

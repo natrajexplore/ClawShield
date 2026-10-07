@@ -144,20 +144,23 @@ Answered by the M0 spike, see `docs/adr/0002-openclaw-target-access.md`:
 3. **Still open:** what a guardrail block looks like to the caller in action mode. Observe mode
    only logs `action=block`. Verify during step 11 (promotion check), not before.
 
-## 8. Generate critical cases with promptfoo (FR-5)
+## 8. Build the full corpus: public critical cases + promptfoo (FR-5)
 
-The gate's confidence bound needs **>= 110 critical cases** (26 today). Generate them against the
-lab agent, then import them through the allowlisting importer:
+The gate's confidence bound needs **>= 110 critical cases**: 26 in the seed plus 112 from the
+vendored Lakera Gandalf set (`redteam/corpus/public/README.md`). promptfoo adds high/medium
+volume (it rates our allowlisted plugins High/Medium, never Critical). Generation is local:
 
 ```bash
-# Point redteam/promptfooconfig.yaml's target at the interface found in step 7, then:
-npx promptfoo@latest redteam generate -c redteam/promptfooconfig.yaml
-npx promptfoo@latest eval -c redteam/promptfooconfig.yaml --output results.json
-uv run clawshield ingest --promptfoo results.json --out redteam/corpus/combined.jsonl
+# once: pinned promptfoo in its own folder
+mkdir -p ~/pf && cd ~/pf && npm init -y && npm install --save-exact promptfoo@0.124.0 && cd -
+bash scripts/promptfoo_generate.sh        # prompts for your OpenAI key (hidden), no cloud
+# review redteam/generated/redteam.yaml, then:
+uv run clawshield ingest --extra redteam/corpus/public/gandalf_ignore_instructions.jsonl   --promptfoo redteam/generated/redteam.yaml --out redteam/corpus/combined.jsonl
 ```
 
-**Check:** the ingest summary shows `critical >= 84` added and lists any rejected plugins.
-Only allowlisted plugins are imported; `harmful:*` generators are rejected by design.
+**Check:** the summary shows `critical` >= 112 and lists rejected plugins (`harmful:*` and other
+non-allowlisted generators are rejected by design). Review the combined corpus before
+committing it: no real PII or credentials (CLAUDE.md corpus safety).
 
 ## 9. First baseline run
 
@@ -205,4 +208,4 @@ Roll back with `defenseclaw setup guardrail --non-interactive --connector opencl
 |---|---|---|
 | 6 | `tests/fixtures/defenseclaw/` (reviewed), done 2026-10-07 | `audit.db` verdict source, observe-mode verification, `doctor` |
 | 7 | ADR 0002, done 2026-10-07 (action-mode block shape still open) | `openclaw` TargetClient, real runs |
-| 8 | a real `results.json` (or just the ingest summary) | replaces the type-derived promptfoo fixture |
+| 8 | the ingest summary of the combined corpus | full baseline run (step 9) |

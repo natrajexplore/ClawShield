@@ -7,6 +7,10 @@ src/util/output.ts), 2026-10-06; confirm with a real captured results.json from 
     EvaluateResult.testCase.vars[<injectVar>]  -> the attack text
     EvaluateResult.testCase.metadata.pluginId / strategyId / severity (optional)
 
+Also accepted: the `redteam.yaml` written by `promptfoo redteam generate` (`.yaml`/`.yml`),
+whose top-level `tests` list holds the same test cases. Importing it needs no `eval`, so no
+attack is sent to any target and no grader model is called.
+
 The file is untrusted data (THREAT_MODEL: malicious corpus import): size-capped, parsed
 strictly, every case schema-validated, nothing executed. Only plugins on an explicit
 allowlist are mapped to categories; anything else is rejected and counted, which also
@@ -21,8 +25,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import yaml
 from pydantic import ValidationError
 
+from clawshield.config import safe_load_unique
 from clawshield.core.models import Case, Category, Severity
 
 MAX_RESULTS_BYTES = 200 * 1024 * 1024
@@ -92,6 +98,11 @@ def _load(path: Path) -> Any:
         raise PromptfooImportError(f"cannot read {path}: {exc.strerror}") from None
     except UnicodeDecodeError:
         raise PromptfooImportError(f"{path} is not valid UTF-8") from None
+    if path.suffix.lower() in (".yaml", ".yml"):
+        try:
+            return safe_load_unique(text)
+        except yaml.YAMLError as exc:
+            raise PromptfooImportError(f"{path}: invalid YAML: {str(exc)[:200]}") from None
     try:
         return json.loads(
             text, object_pairs_hook=_reject_duplicate_keys, parse_constant=_reject_constant
@@ -102,12 +113,15 @@ def _load(path: Path) -> Any:
 
 
 def _results_list(data: Any) -> list[Any]:
+    tests = data.get("tests") if isinstance(data, dict) else None
+    if isinstance(tests, list) and "results" not in data:  # promptfoo redteam generate output
+        return [{"testCase": t} for t in tests]
     summary = data.get("results") if isinstance(data, dict) else None
     rows = summary.get("results") if isinstance(summary, dict) else None
     if not isinstance(rows, list):
         raise PromptfooImportError(
-            "not a promptfoo results file: expected results.results to be a list "
-            "(promptfoo eval --output results.json, summary version 3)"
+            "not a promptfoo results file: expected results.results (promptfoo eval --output "
+            "results.json, summary version 3) or tests (promptfoo redteam generate) to be a list"
         )
     return rows
 

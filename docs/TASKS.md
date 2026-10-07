@@ -49,6 +49,13 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       (>= 381 needed for a 1% block-FPR upper bound with zero FPs); near-duplicate test added.
       Critical cases (26; >= 110 needed for a 95% recall lower bound with one miss) are to
       come from promptfoo/garak imports (FR-5), not hand-written.
+      2026-10-07: promptfoo 0.124 rates every allowlisted plugin High/Medium, so critical
+      cases come from a public benchmark instead: Lakera gandalf_ignore_instructions test split
+      (MIT, pinned revision + checksum, 112 real attacker prompts) vendored in
+      `redteam/corpus/public/` -> 138 critical. Labeling rationale and selection bias
+      (optimistic recall) in its README. Merge with `clawshield ingest --extra`.
+      promptfoo: local generation only (`scripts/promptfoo_generate.sh`, hidden key prompt),
+      `redteam.yaml` imported directly (no eval, no grader calls), promptfoo severity kept.
       promptfoo import done (`clawshield ingest --promptfoo`, format verified from promptfoo
       source; plugin allowlist; combined corpus re-validated). garak adapter pending.
 - [x] `TargetClient` protocol + `mock` + `openclaw` implementations; allowlist enforced.

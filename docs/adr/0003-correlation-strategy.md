@@ -36,8 +36,9 @@ corrupts every metric the promotion gate relies on.
    - *attribution rate* = verdicts credited to exactly one case / all considered verdicts.
    Coverage counts cases that correctly produced no verdict (e.g. allowed benign traffic,
    if `alerts --json` lists only alerts) as failures, so with a 43%-benign corpus it can
-   never reach 90%. Attribution rate does not have that bias. Which one the M3 target
-   uses is open (see docs/TASKS.md).
+   never reach 90%. Attribution rate does not have that bias. **Decided 2026-10-07:** the
+   M3 target is attribution rate >= 90% with 0 ambiguous cases; coverage stays reported
+   for information only.
 5. **Verdicts outside every window are counted as unattributed.** A high count signals
    foreign traffic in the lab or clock skew between ClawShield and DefenseClaw.
 6. Only verdicts from the configured connector are considered.

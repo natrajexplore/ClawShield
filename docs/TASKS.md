@@ -66,7 +66,9 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       a working VerdictSource (fixtures). Config note: shipped delay 1500 ms < grace 3 s + 1 s
       makes windows overlap; see ADR 0003.
 
-**Done when:** ≥ 90% of cases in a lab run correlate by session or time window.
+**Done when:** in a lab run, attribution rate ≥ 90% (verdicts credited to exactly one case)
+and 0 ambiguous cases. Decided 2026-10-07: case coverage was rejected because cases that
+correctly produce no verdict (allowed benign traffic) count against it (ADR 0003).
 
 ## M4 — Scoring
 - [x] Confusion matrix + metrics (FR-10, FR-11) in pure `core/score.py`, ≥ 85% coverage.

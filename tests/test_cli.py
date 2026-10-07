@@ -136,8 +136,12 @@ def test_run_with_bad_corpus(lab: dict[str, Any], tmp_path: Path) -> None:
 
 def test_run_refuses_unimplemented_target(lab: dict[str, Any]) -> None:
     config = yaml.safe_load(lab["config"].read_text(encoding="utf-8"))
-    config["target"] = {"kind": "openclaw", "name": "helpdesk-demo"}
-    config["targets"] = {"allowlist": ["helpdesk-demo"]}
+    config["target"] = {
+        "kind": "openai_compat",
+        "name": "x",
+        "base_url": "http://127.0.0.1:4000/v1",
+    }
+    config["targets"] = {"allowlist": ["http://127.0.0.1:4000"]}
     lab["config"].write_text(yaml.safe_dump(config), encoding="utf-8")
     result = _run(lab)
     assert result.exit_code == EXIT_ERROR

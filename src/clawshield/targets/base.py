@@ -55,4 +55,13 @@ def build_target(settings: Settings) -> TargetClient:
         from clawshield.targets.mock import MockTarget
 
         return MockTarget(name=target.name)
+    if target.kind == "openclaw":
+        from clawshield.targets.openclaw import OpenClawTarget
+
+        if not target.agent:
+            raise TargetError("target.agent is required for kind openclaw")
+
+        return OpenClawTarget(
+            target.name, agent=target.agent, binary=target.binary, timeout_s=target.timeout_s
+        )
     raise TargetError(f"target kind {target.kind!r} is not implemented yet (ADR 0002, M2)")

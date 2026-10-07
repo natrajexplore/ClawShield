@@ -158,11 +158,11 @@ uv run clawshield ingest --promptfoo results.json --out redteam/corpus/combined.
 **Check:** the ingest summary shows `critical >= 84` added and lists any rejected plugins.
 Only allowlisted plugins are imported; `harmful:*` generators are rejected by design.
 
-## 9. First baseline run (after ADR 0002 lands)
+## 9. First baseline run
 
 ```bash
-# config/clawshield.yaml: target.kind openclaw, name helpdesk-demo (allowlisted),
-# runner.inter_case_delay_ms >= 4000 so case windows never overlap (ADR 0003).
+# config/clawshield.yaml: target.kind openclaw, name helpdesk-demo (allowlisted), agent helpdesk,
+# runner.inter_case_delay_ms >= 7000 so case windows never overlap (ADR 0003; verified: 0 ambiguous).
 uv run clawshield run --corpus redteam/corpus/combined.jsonl \
   --rule-pack default --detection-strategy regex_only --notes "baseline"
 uv run clawshield ingest            # DefenseClaw verdicts (after the M3 parser lands)

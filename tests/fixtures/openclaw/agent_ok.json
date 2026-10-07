@@ -1,0 +1,250 @@
+{
+  "runId": "59ca196a-4a87-4874-9125-06ba6c2332fb",
+  "status": "ok",
+  "summary": "completed",
+  "result": {
+    "payloads": [
+      {
+        "text": "To map a shared network drive:\n\n**Windows**\n1. Open **File Explorer**.\n2. Right-click **This PC** → **Map network drive**.\n3. Choose a drive letter.\n4. Enter the folder path, e.g. `\\\\server\\share`.\n5. Check **Reconnect at sign-in** if needed.\n6. Click **Finish** and sign in with your company credentials if prompted.\n\n**macOS**\n1. Open **Finder**.\n2. Press **Cmd + K** or choose **Go → Connect to Server**.\n3. Enter the address, e.g. `smb://server/share`.\n4. Click **Connect** and authenticate if prompted.\n\nIf you don’t know the server/share path or access is denied, open an IT ticket with the team/shared drive name you need.",
+        "mediaUrl": null
+      }
+    ],
+    "meta": {
+      "durationMs": 3548,
+      "agentMeta": {
+        "sessionId": "clawshield-shape-ok-2",
+        "sessionFile": "/home/clawlab/.openclaw/agents/helpdesk/sessions/clawshield-shape-ok-2.jsonl",
+        "provider": "openai",
+        "model": "gpt-5.5",
+        "contextTokens": 272000,
+        "agentHarnessId": "openclaw",
+        "usage": {
+          "input": 938,
+          "output": 171,
+          "cacheRead": 3584,
+          "total": 4693
+        },
+        "lastCallUsage": {
+          "input": 938,
+          "output": 171,
+          "cacheRead": 3584,
+          "cacheWrite": 0,
+          "reasoningTokens": 0,
+          "total": 4693
+        },
+        "promptTokens": 4522,
+        "contextBudgetStatus": {
+          "schemaVersion": 1,
+          "source": "pre-prompt-estimate",
+          "updatedAt": 1791368040364,
+          "provider": "openai",
+          "model": "gpt-5.5",
+          "route": "fits",
+          "shouldCompact": false,
+          "estimatedPromptTokens": 5582,
+          "contextTokenBudget": 272000,
+          "promptBudgetBeforeReserve": 252000,
+          "reserveTokens": 20000,
+          "effectiveReserveTokens": 20000,
+          "remainingPromptBudgetTokens": 246418,
+          "overflowTokens": 0,
+          "toolResultReducibleChars": 0,
+          "messageCount": 0,
+          "unwindowedMessageCount": 0,
+          "sessionId": "clawshield-shape-ok-2"
+        }
+      },
+      "aborted": false,
+      "finalAssistantVisibleText": "To map a shared network drive:\n\n**Windows**\n1. Open **File Explorer**.\n2. Right-click **This PC** → **Map network drive**.\n3. Choose a drive letter.\n4. Enter the folder path, e.g. `\\\\server\\share`.\n5. Check **Reconnect at sign-in** if needed.\n6. Click **Finish** and sign in with your company credentials if prompted.\n\n**macOS**\n1. Open **Finder**.\n2. Press **Cmd + K** or choose **Go → Connect to Server**.\n3. Enter the address, e.g. `smb://server/share`.\n4. Click **Connect** and authenticate if prompted.\n\nIf you don’t know the server/share path or access is denied, open an IT ticket with the team/shared drive name you need.",
+      "finalAssistantRawText": "To map a shared network drive:\n\n**Windows**\n1. Open **File Explorer**.\n2. Right-click **This PC** → **Map network drive**.\n3. Choose a drive letter.\n4. Enter the folder path, e.g. `\\\\server\\share`.\n5. Check **Reconnect at sign-in** if needed.\n6. Click **Finish** and sign in with your company credentials if prompted.\n\n**macOS**\n1. Open **Finder**.\n2. Press **Cmd + K** or choose **Go → Connect to Server**.\n3. Enter the address, e.g. `smb://server/share`.\n4. Click **Connect** and authenticate if prompted.\n\nIf you don’t know the server/share path or access is denied, open an IT ticket with the team/shared drive name you need.",
+      "systemPromptReport": {
+        "source": "run",
+        "generatedAt": 1791368040321,
+        "sessionId": "clawshield-shape-ok-2",
+        "sessionKey": "agent:helpdesk:explicit:clawshield-shape-ok-2",
+        "provider": "openai",
+        "model": "gpt-5.5",
+        "workspaceDir": "/home/clawlab/.openclaw/workspace-helpdesk",
+        "bootstrapMaxChars": 20000,
+        "bootstrapTotalMaxChars": 60000,
+        "bootstrapTruncation": {
+          "warningMode": "always",
+          "warningShown": false,
+          "truncatedFiles": 0,
+          "nearLimitFiles": 0,
+          "totalNearLimit": false
+        },
+        "sandbox": {
+          "mode": "off",
+          "sandboxed": false
+        },
+        "systemPrompt": {
+          "chars": 18439,
+          "hash": "e2b036df3bd36f672e37759b18a0c945ce4b52467657e8c76931149e50a5d148",
+          "projectContextChars": 2008,
+          "nonProjectContextChars": 16431
+        },
+        "injectedWorkspaceFiles": [
+          {
+            "name": "AGENTS.md",
+            "path": "/home/clawlab/.openclaw/workspace-helpdesk/AGENTS.md",
+            "missing": false,
+            "rawChars": 305,
+            "injectedChars": 305,
+            "truncated": false
+          },
+          {
+            "name": "SOUL.md",
+            "path": "/home/clawlab/.openclaw/workspace-helpdesk/SOUL.md",
+            "missing": false,
+            "rawChars": 870,
+            "injectedChars": 870,
+            "truncated": false
+          },
+          {
+            "name": "TOOLS.md",
+            "path": "/home/clawlab/.openclaw/workspace-helpdesk/TOOLS.md",
+            "missing": true,
+            "rawChars": 0,
+            "injectedChars": 74,
+            "truncated": false
+          },
+          {
+            "name": "IDENTITY.md",
+            "path": "/home/clawlab/.openclaw/workspace-helpdesk/IDENTITY.md",
+            "missing": false,
+            "rawChars": 151,
+            "injectedChars": 151,
+            "truncated": false
+          },
+          {
+            "name": "USER.md",
+            "path": "/home/clawlab/.openclaw/workspace-helpdesk/USER.md",
+            "missing": false,
+            "rawChars": 175,
+            "injectedChars": 175,
+            "truncated": false
+          },
+          {
+            "name": "HEARTBEAT.md",
+            "path": "/home/clawlab/.openclaw/workspace-helpdesk/HEARTBEAT.md",
+            "missing": true,
+            "rawChars": 0,
+            "injectedChars": 78,
+            "truncated": false
+          },
+          {
+            "name": "BOOTSTRAP.md",
+            "path": "/home/clawlab/.openclaw/workspace-helpdesk/BOOTSTRAP.md",
+            "missing": true,
+            "rawChars": 0,
+            "injectedChars": 0,
+            "truncated": false
+          }
+        ],
+        "skills": {
+          "promptChars": 4661,
+          "hash": "ded0bdb0cfcd6fd2125c66c777407937a350f05838eb03d427c34577791d4bb9",
+          "entries": [
+            {
+              "name": "clawhub",
+              "blockChars": 340
+            },
+            {
+              "name": "diagram-maker",
+              "blockChars": 313
+            },
+            {
+              "name": "healthcheck",
+              "blockChars": 325
+            },
+            {
+              "name": "meme-maker",
+              "blockChars": 298
+            },
+            {
+              "name": "node-connect",
+              "blockChars": 328
+            },
+            {
+              "name": "node-inspect-debugger",
+              "blockChars": 324
+            },
+            {
+              "name": "notion",
+              "blockChars": 319
+            },
+            {
+              "name": "python-debugpy",
+              "blockChars": 312
+            },
+            {
+              "name": "skill-creator",
+              "blockChars": 306
+            },
+            {
+              "name": "spike",
+              "blockChars": 298
+            },
+            {
+              "name": "taskflow",
+              "blockChars": 328
+            },
+            {
+              "name": "taskflow-inbox-triage",
+              "blockChars": 338
+            },
+            {
+              "name": "weather",
+              "blockChars": 336
+            }
+          ]
+        },
+        "tools": {
+          "listChars": 0,
+          "schemaChars": 89,
+          "entries": [
+            {
+              "name": "session_status",
+              "summaryChars": 278,
+              "summaryHash": "71177e543dc6235bad4b1a26761995681dcec27ab58dcb4f4f8a7fc9a7b2b5aa",
+              "schemaChars": 89,
+              "schemaHash": "d2995f3d69d126e98ac93eec3c2a9fe5556925bd7979a8e4b6b5a2bf62d329dd",
+              "propertiesCount": 2
+            }
+          ]
+        },
+        "currentTurn": {
+          "promptChars": 36,
+          "runtimeContextChars": 0
+        }
+      },
+      "finalPromptText": "How do I map a shared network drive?",
+      "replayInvalid": false,
+      "livenessState": "working",
+      "stopReason": "stop",
+      "executionTrace": {
+        "winnerProvider": "openai",
+        "winnerModel": "gpt-5.5",
+        "attempts": [
+          {
+            "provider": "openai",
+            "model": "gpt-5.5",
+            "result": "success",
+            "stage": "assistant"
+          }
+        ],
+        "fallbackUsed": false,
+        "runner": "embedded"
+      },
+      "requestShaping": {
+        "authMode": "auth-profile",
+        "thinking": "off"
+      },
+      "completion": {
+        "stopReason": "stop",
+        "finishReason": "stop"
+      }
+    }
+  }
+}

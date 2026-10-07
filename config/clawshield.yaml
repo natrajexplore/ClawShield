@@ -10,6 +10,10 @@ defenseclaw:
 target:
   kind: openclaw              # openclaw | openai_compat | mock
   name: helpdesk-demo
+  # openclaw only (ADR 0002):
+  agent: helpdesk             # OpenClaw agent id; its model must run on the embedded runtime
+  binary: openclaw
+  timeout_s: 300              # per case turn
   # openai_compat only:
   base_url: http://127.0.0.1:4000/v1
   api_key_env: CLAWSHIELD_TARGET_API_KEY

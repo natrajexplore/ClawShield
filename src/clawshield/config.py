@@ -80,9 +80,15 @@ class TargetConfig(_Strict):
     base_url: str | None = None
     api_key_env: EnvVarName | None = None
     model: str | None = None
+    # openclaw only (ADR 0002): the OpenClaw agent id, CLI program and per-turn timeout.
+    agent: Annotated[str, Field(pattern=r"^[a-z0-9][a-z0-9_-]{0,63}$")] | None = None
+    binary: Annotated[str, Field(min_length=1)] = "openclaw"
+    timeout_s: Annotated[float, Field(gt=0, le=3600)] = 300
 
     @model_validator(mode="after")
     def _check_url(self) -> Self:
+        if self.kind == "openclaw" and not self.agent:
+            raise ValueError("agent is required when kind is openclaw (OpenClaw agent id)")
         if self.kind == "openai_compat" and not self.base_url:
             raise ValueError("base_url is required when kind is openai_compat")
         if self.base_url is not None:

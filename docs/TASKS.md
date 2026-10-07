@@ -9,15 +9,17 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
 > M1 tasks that need no live lab proceed on Windows meanwhile.
 > Step-by-step procedure: `docs/LAB_RUNBOOK.md`; fixture capture: `scripts/capture_fixtures.sh`.
 
-- [ ] OpenClaw installed and gateway running (`openclaw gateway status`).
+- [x] OpenClaw installed and gateway running (`openclaw gateway status`).
+      2026.7.35 (2026.9.8 never loads the DefenseClaw plugin; ADR 0002, LAB_RUNBOOK step 3).
 - [ ] DefenseClaw installed (`defenseclaw quickstart`), `defenseclaw doctor` clean.
-- [ ] Guardrail in observe mode for the OpenClaw connector:
+- [x] Guardrail in observe mode for the OpenClaw connector:
       `defenseclaw setup guardrail --non-interactive --connector openclaw --mode observe --scanner-mode local --restart`
-- [ ] Demo HelpDesk agent configured with a system prompt containing canary `CANARY-7F3A`.
+- [x] Demo HelpDesk agent configured with a system prompt containing canary `CANARY-7F3A`.
 - [x] Confirm whether the OpenClaw connector is hook-based or proxy-based (PRD Q1); record answer.
       **Proxy-based** per official docs (see `docs/DEFENSECLAW_REFERENCE.md`); re-confirm on the lab.
-- [ ] Capture real outputs into `tests/fixtures/defenseclaw/`: `status --json`, `guardrail status`,
+- [x] Capture real outputs into `tests/fixtures/defenseclaw/`: `status --json`, `guardrail status`,
       `alerts --json --limit 50` after sending 5 benign + 5 malicious messages by hand.
+      0.8.10 has no `alerts --json`; captured `audit.db` `audit_events` instead (ADR 0001).
 
 **Done when:** fixtures committed and `scripts/bootstrap.sh` documents every step.
 
@@ -42,8 +44,11 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       come from promptfoo/garak imports (FR-5), not hand-written.
       promptfoo import done (`clawshield ingest --promptfoo`, format verified from promptfoo
       source; plugin allowlist; combined corpus re-validated). garak adapter pending.
-- [ ] `TargetClient` protocol + `mock` + `openclaw` implementations; allowlist enforced.
-      Done: protocol, `mock`, allowlist re-check in `build_target`. Pending: `openclaw` (needs ADR 0002).
+- [x] `TargetClient` protocol + `mock` + `openclaw` implementations; allowlist enforced.
+      `openclaw` (ADR 0002): one `openclaw agent --json` turn per case, text via a private temp
+      file, lowercase per-run sessions, stored session key reported; turns not on the
+      `openclaw` harness, aborted or non-`ok` are errors (never scored). Fixture-tested on a
+      recorded reply; lab run 20261007T101819Z: 10 cases, 0 errors, 0 leaks.
 - [x] `clawshield run` stores `Run` + `TargetResult` rows; captures guardrail snapshot.
       Snapshot parsing is unverified against real DefenseClaw output until M0 fixtures exist;
       runs without a snapshot are flagged "(no snapshot)" and must not be used as gate evidence.
@@ -65,10 +70,11 @@ Work top to bottom. Tick boxes as acceptance criteria are met. Commit prefix: `M
       `Verdict` model (FR-8, direction may be `unknown`), `stable_verdict_id` (source id,
       else canonical-JSON SHA-256), `VerdictSource` protocol, `Store.add_verdicts` with
       ON CONFLICT DO NOTHING; raw payload dropped when redacting.
-- [ ] Correlation per ARCHITECTURE.md; ADR 0003; report correlation coverage.
+- [x] Correlation per ARCHITECTURE.md; ADR 0003; report correlation coverage.
       Done: `core/correlate.py` (session -> time window -> ambiguous, never guessed),
-      coverage + unattributed counts, ADR 0003. Pending: CLI coverage report, which needs
-      a working VerdictSource (fixtures). Config note: shipped delay 1500 ms < grace 3 s + 1 s
+      coverage + unattributed counts, ADR 0003; `clawshield score` prints attribution.
+      **Lab run 20261007T101819Z (10 cases, delay 7 s): attribution 100%, 0 ambiguous,
+      3 cases by session** (done-when met on a smoke run; re-check at corpus scale). Config note: shipped delay 1500 ms < grace 3 s + 1 s
       makes windows overlap; see ADR 0003.
 
 **Done when:** in a lab run, attribution rate ≥ 90% (verdicts credited to exactly one case)

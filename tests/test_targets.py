@@ -159,7 +159,6 @@ def test_build_rechecks_allowlist() -> None:
 @pytest.mark.parametrize(
     ("target", "allowlist"),
     [
-        ({"kind": "openclaw", "name": "helpdesk-demo"}, ["helpdesk-demo"]),
         (
             {"kind": "openai_compat", "name": "x", "base_url": "http://127.0.0.1:4000/v1"},
             ["http://127.0.0.1:4000"],
